@@ -57,3 +57,7 @@ Skill 文件存在不等于当前会话已加载；可明确让 Codex 读取该�
 `python verify_reproducibility.py --input-root /path/to/exports` 不采集新数据。旧 107 条样本通过四步测试，7 个结果文件两次一致；核验补充后能重新生成报告；重复筛选及证据不足的趋势被拒绝。核验测试使用临时模拟记录，不代表实际完成原帖核验。通用命令不限制输入为 107 条。采集命令桥接尚未用新一轮线上采集验证。
 
 MediaCrawler 开源版声明非商业学习用途；正式商业使用需取得必要授权。此仓库不附带其源码或数据。
+
+## 爆款候选优先级（新增）
+
+采集筛选标准见 COLLECTION_STANDARD.md，参数见 config/discovery_policy.json。screen 额外生成 priority_queue.jsonl：同平台、相近发布时长内，分别按多个指标选前列候选，不计算混合热度分。B站新增 coins，来源为 MediaCrawler video_coin_count；缺失仍为 null。该规则尚未经过新一轮线上采集验证，当前周期配置仍是旧固定样本。
