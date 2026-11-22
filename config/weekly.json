@@ -1,0 +1,9 @@
+{
+  "schema_version": "1.0",
+  "timezone": "America/Los_Angeles",
+  "window_start": "2026-11-16T00:00:00-08:00",
+  "window_end": "2026-11-23T00:00:00-08:00",
+  "observation_cutoff": "2026-11-22T00:55:00-08:00",
+  "keywords": ["美食", "探店"],
+  "filter_version": "1.0.0"
+}
