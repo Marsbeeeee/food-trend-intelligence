@@ -33,6 +33,10 @@ def main():
     if a.stage=='discovery':
         if run.exists(): p.error('Run exists; choose a new ID')
         cfg=read(a.config)
+        if cfg.get('window_mode')=='rolling_7_days':
+            anchor=stamp(cfg['observation_cutoff']) if cfg.get('observation_cutoff') else datetime.now(ZoneInfo(cfg['timezone']))
+            cfg={**cfg,'observation_cutoff':anchor.isoformat(),'window_end':anchor.isoformat(),'window_start':(anchor-timedelta(days=7)).isoformat()}
+            print('Shared collection anchor: '+anchor.isoformat(),flush=True)
         start,end,cutoff=[stamp(cfg[k]) for k in ('window_start','window_end','observation_cutoff')]
         if start>=end or cutoff<start: p.error('Invalid date window')
         if not cfg.get('keywords') or not cfg.get('discovery_description'): p.error('Record keywords and discovery_description')
