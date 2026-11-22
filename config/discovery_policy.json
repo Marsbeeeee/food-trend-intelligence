@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "purpose": "爆款候选发现，非爆款认证",
   "collection": {
     "keywords": [
@@ -13,13 +13,19 @@
     "max_per_keyword_per_route": 20,
     "preferred_route": "平台实际支持的热度/点赞/播放排序；综合排序须注明不能视为热榜",
     "supplement_route": "最新发布",
-    "record_actual_conditions": true
+    "record_actual_conditions": true,
+    "schedule": {
+      "timezone": "Asia/Shanghai",
+      "preferred_day": "Sunday evening",
+      "publication_range": "previous Sunday 00:00 inclusive to current Sunday 00:00 exclusive",
+      "minimum_age_hours": 24,
+      "automatic_schedule": false
+    }
   },
   "ranking": {
     "min_cohort": 10,
     "top_k_per_metric": 5,
     "age_bands_hours": [
-      24,
       72
     ],
     "platform_metrics": {
@@ -45,6 +51,7 @@
       ]
     },
     "absolute_thresholds": null,
-    "cross_platform_score": false
+    "cross_platform_score": false,
+    "minimum_age_hours": 24
   }
 }
