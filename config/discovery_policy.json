@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "purpose": "爆款候选发现，非爆款认证",
+  "collection": {
+    "keywords": [
+      "美食",
+      "家常菜",
+      "地方小吃",
+      "探店",
+      "甜品烘焙",
+      "美食挑战"
+    ],
+    "max_per_keyword_per_route": 20,
+    "preferred_route": "平台实际支持的热度/点赞/播放排序；综合排序须注明不能视为热榜",
+    "supplement_route": "最新发布",
+    "record_actual_conditions": true
+  },
+  "ranking": {
+    "min_cohort": 10,
+    "top_k_per_metric": 5,
+    "age_bands_hours": [
+      24,
+      72
+    ],
+    "platform_metrics": {
+      "douyin": [
+        "likes",
+        "favorites",
+        "shares",
+        "comments"
+      ],
+      "xiaohongshu": [
+        "likes",
+        "favorites",
+        "shares",
+        "comments"
+      ],
+      "bilibili": [
+        "views",
+        "likes",
+        "coins",
+        "favorites",
+        "shares",
+        "comments"
+      ]
+    },
+    "absolute_thresholds": null,
+    "cross_platform_score": false
+  }
+}
