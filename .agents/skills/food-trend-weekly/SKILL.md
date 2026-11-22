@@ -1,16 +1,13 @@
 ---
 name: food-trend-weekly
-description: Process existing MediaCrawler food-video exports into reproducible weekly reports and verification records. Use for fixed-sample weekly reporting, not discovering or collecting new videos.
+description: Run a four-stage food-video weekly workflow with MediaCrawler collection, deterministic screening, original-video verification and Markdown reporting. Use for staged food intelligence reporting.
 ---
 
-Run from the food-trend-intelligence repository root. Read README.md and config/weekly.json. Confirm xhs, dy and bili JSONL inputs and requested period before running.
+Read README.md, the selected config and the repository Markdown master before execution. Run commands from the repository root. Follow the user's requested stage and stop after that stage to report its result; do not automatically continue a staged request.
 
-Use the existing command: `python run_pipeline.py --input-root <exports> --run-id <unique-id>`. Never rewrite filtering or infer new thresholds during a run. Rule changes require versioned code/config and a new regression run.
+1. Discovery: agree on period, keywords and collection scope. Use the existing MediaCrawler checkout and its documented commands, never invent collector flags. Invoke it via the optional collector argv or existing collection tools, then import its xhs/dy/bili JSONL exports with `python run_pipeline.py discovery`. Record the actual search conditions in discovery_description. Export import alone is not proof of a new crawl. Login/collection failures must be reported; ask the user to scan only when required.
+2. Pipeline: run `python run_pipeline.py screen` with the same run ID. Show filter_summary.json and review_queue.jsonl. Keep filtering in versioned Python; do not silently change thresholds.
+3. Verification: prioritize promising candidates within each platform; explain priority without mixing metrics. Open original videos, check author/date/type/relevance and at least one metric. Watch content or obtain reliable subtitles before writing form observations. Write checks JSONL using the README schema, then run `verify --checks`. Only completed, evidenced checks belong here; missing/access-blocked candidates remain pending. Skill performs browsing and judgment; Python validates and stores the records. Multiple related creators need attributable evidence before marking a trend.
+4. Reporting: run `report`. Python reads current 01–08 headings from the MD master and fills verified data. Read the generated Markdown, inspect evidence links/counts and revise verification records if needed, then rerun verify/report. Report remains draft pending human review. No default Google Docs publishing.
 
-Check stage_manifest.json, filter_summary.json, logs/errors.jsonl and report_manifest.json. Every input must have a normalized record or explicit parse error; every parsed record must have a screening decision. Keep unknown metrics null and uncertain fields pending. Do not promote a single case into a trend or combine platform metrics into a ranking.
-
-Use `python verify_reproducibility.py --input-root <exports>` to compare two fresh runs. Run directories cannot be overwritten. Missing platform data, invalid configuration or stage failures stop reporting; explain the concrete failure and preserve completed diagnostics.
-
-Manual original-page checks belong in separate verification override JSONL records with operator, checked_at and evidence_source. Never change imported source lines. Login/access failures stay pending; do not bypass them or invent values.
-
-Local report.md is mandatory. Its numbered sections follow the current 01–08 report structure. Google Docs is optional, only on user request after local output passes checks; copy the user-supplied current template and read it before editing. Failure to publish must not invalidate local output. Do not modify the master template.
+Each stage requires its predecessor's saved output. Use a new run for changed input/config/filtering. Verification and report retain numbered revisions. Do not edit frozen source files. Keep local data, login state and credentials out of GitHub. Current collection integration is a generic command hook, not a bundled MediaCrawler installation or tested new discovery algorithm.
