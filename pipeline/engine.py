@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 
 
 VERSION = "1.0.0"
-SCHEMA = "1.0"
+SCHEMA = "1.1"
 PLATFORMS = {"xhs": "xiaohongshu", "dy": "douyin", "bili": "bilibili"}
 EXPECTED_RAW = {"xiaohongshu": 40, "douyin": 28, "bilibili": 39}
 EXPECTED_BASELINE = {"xiaohongshu": 27, "douyin": 25, "bilibili": 10}
@@ -125,6 +125,7 @@ def normalize(raw: dict, tz: ZoneInfo) -> dict:
     captured, _ = from_epoch(record.get("last_modify_ts"), milliseconds=True, tz=tz)
     source = raw["source_ref"]
     record_id = hashlib.sha256(f"{source['sha256']}:{source['line']}".encode()).hexdigest()[:20]
+    fields["coins"] = "video_coin_count" if platform == "bilibili" else None
     metrics = {name: metric(record.get(field)) if field else None for name, field in fields.items()}
     content_id = clean_text(record.get(id_key))
     url = clean_text(record.get(url_key))
