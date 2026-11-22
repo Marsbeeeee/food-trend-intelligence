@@ -61,3 +61,7 @@ MediaCrawler 开源版声明非商业学习用途；正式商业使用需取得�
 ## 爆款候选优先级（新增）
 
 采集筛选标准见 COLLECTION_STANDARD.md，参数见 config/discovery_policy.json。screen 额外生成 priority_queue.jsonl：同平台、相近发布时长内，分别按多个指标选前列候选，不计算混合热度分。B站新增 coins，来源为 MediaCrawler video_coin_count；缺失仍为 null。该规则尚未经过新一轮线上采集验证，当前周期配置仍是旧固定样本。
+
+## 编号约定
+
+周报编号采用日期范围，例如 2026-1115-1121；条目采用 2026-1115-1121-001。脚本按配置时区的起始日及结束时刻（不含）之前的日期生成；跨年例为 2026-1227-2027-0102。报告同时输出日期编号文件。report_input.json 保留 entry_id、内部 record_id、video_key 对照；原视频ID不重新编号。补充条目后重新生成的序号可能变化，引用须带对应报告版本；跨批次稳定候选池尚未实现。
