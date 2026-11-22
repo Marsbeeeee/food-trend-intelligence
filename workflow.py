@@ -78,6 +78,7 @@ def main():
                     if not r[k]:reasons.append(k+'_unknown')
                 if r['published_at'] and not(start<=stamp(r['published_at'])<end and stamp(r['published_at'])<=cutoff):reasons.append('outside_window');hard=True
                 if r['captured_at'] and stamp(r['captured_at'])>cutoff:reasons.append('after_cutoff');hard=True
+                if r['captured_at'] and r['published_at'] and (stamp(r['captured_at'])-stamp(r['published_at'])).total_seconds()<24*3600:reasons.append('not_mature_24h');hard=True
                 if r['content_type']!='video':reasons.append('type_unknown' if r['content_type']=='unknown' else 'not_video');hard|=r['content_type']=='image_text'
                 key=(r['platform'],r['content_id'] or canonical_url(r['url']))
                 if key[1] and key in seen:reasons.append('duplicate');hard=True
