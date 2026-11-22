@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 p=argparse.ArgumentParser();p.add_argument('--input-root',required=True);a=p.parse_args()
 def call(stage,dest,extra=(),ok=True):
-    r=subprocess.run([sys.executable,str(ROOT/'run_pipeline.py'),stage,'--run-id','regression','--run-root',str(dest),*extra],capture_output=True,text=True,encoding='utf-8',errors='replace')
+    r=subprocess.run([sys.executable,str(ROOT/'run_pipeline.py'),stage,'--run-id','regression','--run-root',str(dest),'--config',str(ROOT/'config/fixture.json'),*extra],capture_output=True,text=True,encoding='utf-8',errors='replace')
     if ok and r.returncode:raise RuntimeError(r.stdout+r.stderr)
     if not ok:assert r.returncode!=0
 with tempfile.TemporaryDirectory() as tmp:
