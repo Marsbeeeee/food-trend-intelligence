@@ -1,15 +1,16 @@
 {
   "schema_version": "1.0",
-  "timezone": "America/Los_Angeles",
-  "window_start": "2026-11-16T00:00:00-08:00",
-  "window_end": "2026-11-23T00:00:00-08:00",
-  "observation_cutoff": "2026-11-22T00:55:00-08:00",
+  "timezone": "Asia/Shanghai",
+  "window_start": null,
+  "window_end": null,
+  "observation_cutoff": null,
   "keywords": [
     "美食",
     "探店"
   ],
   "filter_version": "1.0.0",
   "template": "视频热点情报周报_母版.md",
-  "discovery_description": "固定回归样本：三平台美食、探店各一页；不是正式采集标准",
-  "discovery_policy": "config/discovery_policy.json"
+  "discovery_description": "滚动过去7天；排除不足24小时。抖音最近一周最多点赞；B站同一基准时刻计算日期范围并最多播放；小红书最新视频入口后筛日期，覆盖不保证。",
+  "discovery_policy": "config/discovery_policy.json",
+  "window_mode": "rolling_7_days"
 }
