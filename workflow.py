@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pipeline.engine import normalize, food_relevance, canonical_url
+from pipeline.priority import prioritize
 
 ROOT=Path(__file__).resolve().parent
 def read(p): return json.loads(p.read_text(encoding='utf-8'))
@@ -55,10 +56,12 @@ def main():
                     if not isinstance(record,dict):raise ValueError('Expected object')
                     raw.append({'source_platform':platform,'source_ref':ref,'raw_record':record})
                 except (ValueError,UnicodeError) as exc:errors.append({'source_ref':ref,'error':str(exc)})
+        policy=read(ROOT/cfg.get('discovery_policy','config/discovery_policy.json'))
+        write(run/'discovery_policy.json',policy)
         write(run/'config.json',cfg);save_rows(run/'raw_candidates.jsonl',raw)
         write(run/'discovery.json',{'parsed':len(raw),'errors':errors,'collector_invoked':bool(a.collector_command)})
         if errors:raise SystemExit('Invalid input; see discovery.json and start corrected run')
-        output=['config.json','raw_candidates.jsonl','discovery.json']
+        output=['config.json','discovery_policy.json','raw_candidates.jsonl','discovery.json']
     else:
         cfg=read(run/'config.json')
         previous={'screen':'discovery','verify':'screen','report':'verify'}[a.stage]
@@ -86,7 +89,8 @@ def main():
             save_rows(run/'excluded.jsonl',[r for r in screened if r['decision']=='exclude'])
             save_rows(run/'review_queue.jsonl',[r for r in screened if r['decision']!='exclude'])
             write(run/'filter_summary.json',{'input':len(normalized),'decisions':{x:sum(r['decision']==x for r in screened) for x in ('keep','pending','exclude')}})
-            output=['normalized_candidates.jsonl','screened_candidates.jsonl','excluded.jsonl','review_queue.jsonl','filter_summary.json']
+            save_rows(run/'priority_queue.jsonl',prioritize(screened,read(run/'discovery_policy.json')))
+            output=['priority_queue.jsonl','normalized_candidates.jsonl','screened_candidates.jsonl','excluded.jsonl','review_queue.jsonl','filter_summary.json']
         elif a.stage=='verify':
             candidates={r['record_id']:r for r in rows(run/'review_queue.jsonl')};checks=rows(a.checks) if a.checks else []
             required=['record_id','operator','checked_at','evidence_url','author','published_at','content_summary','metric','is_video','food_relevant','intelligence_type','performance_basis']
@@ -95,7 +99,7 @@ def main():
                 stamp(c['checked_at']);published=stamp(c['published_at'])
                 if not(stamp(cfg['window_start'])<=published<stamp(cfg['window_end']) and published<=stamp(cfg['observation_cutoff'])):raise SystemExit('Verified publication outside window')
                 m=c['metric'];stamp(m['captured_at'])
-                if m['name'] not in ('views','likes','comments','favorites','shares') or type(m['value']) is not int or m['value']<0:raise SystemExit('Invalid metric')
+                if m['name'] not in ('views','likes','coins','comments','favorites','shares') or type(m['value']) is not int or m['value']<0:raise SystemExit('Invalid metric')
                 if not c['evidence_url'].startswith('https://') or c['is_video'] is not True or c['food_relevant'] is not True:raise SystemExit('Invalid evidence')
                 if c['intelligence_type'] not in ('single_video','trend'):raise SystemExit('Invalid intelligence type')
                 if c['intelligence_type']=='trend' and len(set(c.get('independent_author_keys',[])))<2:raise SystemExit('Trend requires independent authors')
