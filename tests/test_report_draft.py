@@ -1,13 +1,17 @@
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from pipeline.policy import load_policy
 """Draft report contracts: triage stays triage; frozen observations remain intact."""
 import copy,json,unittest
 from datetime import date
-from pipeline.review_report import ROOT,build,validate,snapshots,link
+from pipeline.report_draft import ROOT,build,validate,snapshots,link
 
 class DraftReportTests(unittest.TestCase):
     def setUp(self):
         self.rows=[{'platform':'douyin','content_id':'7616299354227698021','title':'配方教程','author_name':'甲','url':'https://www.douyin.com/video/7531793800897826063/search/test?modal_id=7616299354227698021','captured_at':'2026-11-23T10:00:00+08:00','metrics':{'likes':None},'metrics_display':{'likes':'10万+'},'priority_label':'数据模糊','selection_reasons':['下限待确认']}]
         self.review={'schema_version':'food_review_v1','dataset_id':json.dumps(list(snapshots(self.rows).values())),'reviews':[{'video_key':json.dumps(['douyin','7616299354227698021']),'status':'保留','note':'','updated_at':'2026-11-23T07:00:00Z'}]}
-        self.template=(ROOT/'视频热点情报周报_母版.md').read_text(encoding='utf-8')
+        self.template=(ROOT/'templates/weekly_report.md').read_text(encoding='utf-8')
         self.editorial={'archive_batch':'2026/1122','source_sample_count':1,'cases':{},'focus':[]}
     def render(self):
         return build(self.rows,self.review,self.editorial,date(2026,11,15),date(2026,11,21),'2026-11-22',self.template)

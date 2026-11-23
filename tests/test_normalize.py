@@ -1,11 +1,15 @@
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from pipeline.policy import load_policy
 """All-time collection regression, completeness, reporting and reproducibility."""
 import json,subprocess,sys,tempfile
 from pathlib import Path
 from zoneinfo import ZoneInfo
-from pipeline.browser_records import normalize_browser, completeness_errors
-from pipeline.common import food_relevance
-ROOT=Path(__file__).resolve().parent
-policy=json.loads((ROOT/'config/discovery_policy.json').read_text(encoding='utf-8'))
+from pipeline.normalize import normalize_browser, completeness_errors
+from pipeline.relevance import food_relevance
+ROOT=Path(__file__).resolve().parents[1]
+policy=load_policy()
 for title in ('海鲜自助与便当','三明治和曲奇','收藏这份巴斯克做法'):
     assert food_relevance({'title':title})=='yes'
 assert food_relevance({'title':'Blender烘焙贴图教程'})=='no'
@@ -34,11 +38,11 @@ for item in (old,young,unknown,rounded,invalid,ambiguous,irrelevant):
 with tempfile.TemporaryDirectory() as temp:
     root=Path(temp);folder=root/'input/xhs';folder.mkdir(parents=True)
     (folder/'records.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in (old,young,unknown,rounded,invalid,ambiguous,irrelevant)),encoding='utf-8')
-    cfg=json.loads((ROOT/'config/weekly.json').read_text(encoding='utf-8'))
+    cfg=json.loads((ROOT/'config/report.json').read_text(encoding='utf-8'))
     cfg.update(platforms=['xhs'],observation_cutoff='2026-11-22T20:00:00+08:00',report_period_start='2026-11-15T00:00:00+08:00',report_period_end='2026-11-22T00:00:00+08:00')
     config=root/'config.json';config.write_text(json.dumps(cfg),encoding='utf-8')
     def run(stage,extra=()):
-        subprocess.run([sys.executable,str(ROOT/'run_pipeline.py'),stage,'--run-id','test','--run-root',str(root/'runs'),'--config',str(config),'--input-root',str(root/'input'),*extra],check=True,capture_output=True)
+        subprocess.run([sys.executable,str(ROOT/'run.py'),stage,'--run-id','test','--run-root',str(root/'runs'),'--config',str(config),'--input-root',str(root/'input'),*extra],check=True,capture_output=True)
     for stage in ('discovery','screen','verify','report'):run(stage)
     path=root/'runs/test'
     result=[json.loads(x) for x in (path/'screened_candidates.jsonl').read_text(encoding='utf-8').splitlines()]
@@ -62,6 +66,6 @@ with tempfile.TemporaryDirectory() as temp:
     report=(path/'report.md').read_text(encoding='utf-8')
     assert '2020-01-01' in report and '编辑于2天前' in report and '1.2万（约数/下限）' in report
     assert '不限制视频发布日期' in report and '不代表本周新爆款' in report
-    subprocess.run([sys.executable,str(ROOT/'verify_reproducibility.py'),'--input-root',str(root/'input'),'--config',str(config)],check=True,capture_output=True)
+    subprocess.run([sys.executable,str(ROOT/'tests/check_reproducibility.py'),'--input-root',str(root/'input'),'--config',str(config)],check=True,capture_output=True)
 print('PASS: old, under-24h, unknown/edited dates kept; core omissions rejected; full reporting and reproducibility')
 

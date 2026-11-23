@@ -6,9 +6,9 @@ import re
 from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
-from urllib.parse import urlsplit, parse_qs
+from pipeline.links import video_url as link
 
-ROOT=Path(__file__).resolve().parents[1]
+from pipeline.paths import ROOT,template_path
 PLATFORMS={'bilibili':'B站','douyin':'抖音','xiaohongshu':'小红书'}
 METRICS={'views':'播放','likes':'点赞','favorites':'收藏','comments':'评论','coins':'投币','shares':'分享'}
 
@@ -47,18 +47,6 @@ def validate(rows,review):
             if datetime.fromisoformat(r['updated_at'].replace('Z','+00:00')).tzinfo is None:raise ValueError('Review time must include timezone')
         marks[k]=r
     return marks
-
-def link(row):
-    u=urlsplit(row['url'])
-    domains={'douyin':('douyin.com',),'bilibili':('bilibili.com','b23.tv'),'xiaohongshu':('xiaohongshu.com','xhslink.com')}[row['platform']]
-    if u.scheme!='https' or u.username or u.password or not any(u.hostname==d or (u.hostname or '').endswith('.'+d) for d in domains):raise ValueError('Unexpected source URL')
-    if row['platform']=='douyin':
-        modal=parse_qs(u.query,keep_blank_values=True).get('modal_id')
-        match=re.fullmatch(r'/video/(\d+)/?',u.path)
-        source_id=modal[0] if modal else match[1] if match else None
-        if source_id!=row['content_id'] or not re.fullmatch(r'\d{10,25}',row['content_id']):raise ValueError('Douyin URL identity mismatch')
-        return 'https://www.douyin.com/video/'+row['content_id']
-    return row['url']
 
 def md(text):
     return str(text).replace('\\','\\\\').replace('|','\\|').replace('\n',' ').replace('[','\\[').replace(']','\\]').replace('<','&lt;').replace('>','&gt;')
@@ -145,7 +133,7 @@ def build(rows,review,editorial,start,end,generated_on,template):
         lines.append(f'| {c["entry_id"]} | {PLATFORMS[r["platform"]]} / {md(r.get("author_name","未知"))} | [{md(title)}]({c["url"]}) | {md(r.get("priority_label","未分类"))}；{metrics_text(r)} | {review_label(c["review"])} |')
     lines.extend(['## '+headings[5],
                   '- 原始数据按平台保留；平台与字符串视频ID共同识别内容。筛选结果与复查JSON按数据快照匹配，未改写原数值。',
-                  '- 本期正文是“复查后草稿”，不是verify产生的已核验案例。原视频内容核验与具体形式证据仍沿用DATA_FORMAT.md；不为通过脚本而编造checks.jsonl。',
+                  '- 本期正文是“复查后草稿”，不是verify产生的已核验案例。原视频内容核验与具体形式证据仍沿用docs/data_format.md；不为通过脚本而编造checks.jsonl。',
                   '- 只把有两个及以上独立作者、可追溯独立来源且足以支持同一传播模式的材料认定为趋势；本期未作此认定。',
                   '- 采集时显示约数、下限与门槛并列均保留，不把“数据模糊”改成精确值。'])
     payload={'schema_version':'review_report_v1','status':'review_backed_draft','report_id':report_id,'period_start':start.isoformat(),'period_end':end.isoformat(),'generated_on':generated_on,'selected_count':len(cases),'counts_by_platform':dict(platform_counts),'status_counts':dict(status_counts),'cases':cases}
@@ -160,7 +148,7 @@ def main(argv=None):
     p.add_argument('--generated-on',required=True);p.add_argument('--output-dir',type=Path,required=True)
     a=p.parse_args(argv);start=date.fromisoformat(a.period_start);end=date.fromisoformat(a.period_end);date.fromisoformat(a.generated_on)
     if start>end:p.error('Invalid report period')
-    template=ROOT/'视频热点情报周报_母版.md'
+    template=template_path()
     text,payload=build(load_rows(a.candidates),read(a.reviews),read(a.editorial),start,end,a.generated_on,template.read_text(encoding='utf-8'))
     target=a.output_dir/f'美食视频周报_{payload["report_id"]}.md'
     if target.exists():p.error('Report exists; use a new output directory or archive the previous version')

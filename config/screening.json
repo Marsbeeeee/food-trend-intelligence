@@ -1,0 +1,35 @@
+{
+  "ranking": {
+    "min_cohort": 10,
+    "top_fraction": 0.2,
+    "min_primary_hits": 2,
+    "max_candidates_per_platform": 12,
+    "max_per_author": 2,
+    "fill_with_single_metric_backups": true,
+    "platform_metrics": {
+      "douyin": [
+        "likes",
+        "favorites",
+        "shares"
+      ],
+      "xiaohongshu": [
+        "likes",
+        "favorites"
+      ],
+      "bilibili": [
+        "views",
+        "likes",
+        "favorites",
+        "coins",
+        "shares"
+      ]
+    },
+    "supplemental_metrics": [
+      "comments"
+    ],
+    "absolute_thresholds": null,
+    "cross_platform_score": false,
+    "group_by": "platform",
+    "comparison_basis": "cumulative_display_values; approximate coarse ordering; lower bounds require review"
+  }
+}

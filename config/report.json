@@ -3,8 +3,7 @@
   "timezone": "Asia/Shanghai",
   "observation_cutoff": null,
   "filter_version": "5.0.0",
-  "template": "视频热点情报周报_母版.md",
-  "discovery_policy": "config/discovery_policy.json",
+  "template": "templates/weekly_report.md",
   "collection_method": "direct_browser",
   "platforms": [
     "xhs",
@@ -13,5 +12,7 @@
   ],
   "publication_scope": "all_time",
   "report_period_start": null,
-  "report_period_end": null
+  "report_period_end": null,
+  "collection_policy": "config/collection.json",
+  "screening_policy": "config/screening.json"
 }

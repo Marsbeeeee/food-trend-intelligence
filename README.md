@@ -1,67 +1,51 @@
 # 美食高表现视频周报
 
-流程：**Codex直接浏览美食赛道 → Python筛选和比较互动 → Codex看入选原视频 → Python组装Markdown周报**。
+流程：浏览器采集 → Python整理和筛选 → 查看器复查 → Markdown周报 → 可选Word/PDF。
 
-目标是找有数据支持、值得借鉴的美食内容；关键词只是发现入口。只有进入样本的数据能被比较，不能把样本前列称为全平台前列。
+三个平台的视频发布时间均不限。报告周期只标识出刊编号，归档日期按data/YYYY/MMDD保存，实际采集时间另记。累计互动不是增长，样本前列不是全平台热榜。
 
-|阶段|Skill指导Codex|Python脚本|
-|---|---|---|
-|Discovery|按三平台说明搜索、检查登录、打开详情并记录实际公开字段|collection.py管理日期归档、去重和进度；discovery导入并冻结来源|
-|Pipeline|查看数量和覆盖缺口|筛视频和相关性、去重、按同平台累计指标生成优先核验清单|
-|Verification|重点看候选视频/字幕，判断内容形式及借鉴价值，记录证据|校验核验记录并保留版本|
-|Reporting|检查结论和成稿|计算数量、按MD母版01–06栏目生成草稿|
+## 开始使用
 
-## 使用
-
-脚本用途、清洗规则、运行命令和输出说明见[脚本使用说明](SCRIPTS.md)。
-查看器复查后可使用review-report生成明确标记的Markdown草稿；拥有完整内容证据后再走verify/report。两种输出都沿用现有母版，用户“保留”不会自动升级为完成内容核验。命令与编辑输入格式见SCRIPTS.md。
-人工复查可双击[本地候选查看器](viewer/index.html)：选择候选JSONL，按平台和标签浏览、打开原视频、标记并导出复查笔记；详细用法见SCRIPTS.md“用查看器复查候选”。无需安装或启动服务。
-Python3.11+；Windows如缺时区数据库安装tzdata。浏览器工具由Codex环境提供。先阅读[采集规则](COLLECTION_STANDARD.md)，再按[数据格式](DATA_FORMAT.md)保存本地记录。
-config/weekly.json设置本次出刊编号周期和运行基准；视频发布日期不限，未知日期也不阻塞采集。首次运行可自动冻结基准，复现测试须固定observation_cutoff。
-
-采集先固定归档日期，遵循[采集与续采步骤](COLLECTION_STANDARD.md)。例如2026年12月5日使用data/2026/1205/，分别保存douyin_original.jsonl、xiaohongshu_original.jsonl、bilibili_original.jsonl。同日补齐时去重追加，不覆盖已有观测；不同日期分别保留快照。
+使用Python3.11+，在仓库根目录运行：
 
 ```sh
-python collection.py init --date 2026-12-05
-python collection.py status --date 2026-12-05 --show-ids
-# Codex操作浏览器，使用attempt/append/reject分批记账和保存
-python collection.py audit --date 2026-12-05
+python -m pip install -e .
+python run.py --help
+python run.py test
 ```
 
-collection.py不会自动浏览或扫码；Skill协调浏览器与保存命令。init加--target 3可做小测试，之后显式扩大目标。登录状态能否保留取决于实际浏览器会话，不在GitHub保存会话或登录令牌。
+所有阶段由run.py进入，一次只执行用户指定的阶段：
 
 ```sh
-python run_pipeline.py discovery --run-id 2026-1115-1121-test --input-root data/2026/1122
-python run_pipeline.py screen --run-id 2026-1115-1121-test
-python run_pipeline.py verify --run-id 2026-1115-1121-test --checks /local/checks.jsonl
-python run_pipeline.py report --run-id 2026-1115-1121-test
+python run.py collect init --date 2026-12-05
+python run.py collect status --date 2026-12-05 --show-ids
+python run.py discovery --run-id 2026-1205-screen --input-root data/2026/1205
+python run.py screen --run-id 2026-1205-screen
 ```
 
-每次只执行用户指定阶段。结果在data/runs/<run-id>/，仅保留完整源记录与筛选理由。Discovery和screen不覆盖；补核验后可重跑verify/report并保留版本。用户要求归档并同步仓库时，提交对应日期的三份公开视频原始JSONL，以及用户明确指定归档的筛选结果；collection_state、runs、临时批次、Cookie、登录令牌和浏览器会话始终留本地。只要求本地试跑时不自动上传。
-周报编号为2026-1115-1121，条目追加-001；视频身份为平台:原ID。滚动时间在正文精确注明。没有跨日期候选池，修改筛选来源/配置需新run；采集续采进度与Pipeline的run分开管理。
+collect管理本地记录和进度，不会自行浏览；discovery导入已有文件，不会重新采集。复查时用浏览器打开[viewer/index.html](viewer/index.html)，选择本地候选JSONL。
 
-## 文件
-- .agents/skills/food-trend-weekly/SKILL.md：给Codex的执行说明。
-- run_pipeline.py：命令入口；workflow.py：四阶段脚本。
-- collection.py、pipeline/collection.py：日期归档、分批校验去重、进度与尝试上限；不控制浏览器。
-- docs/collection/：小红书、抖音、B站的实际采集操作说明。
-- pipeline/browser_records.py：字段与精度校验；metrics.py：精确/约数/下限观测；common.py：相关性；priority.py：多指标候选与候补。
-- config/：周期和版本化参数；MD母版：报告栏目来源。
-- test_collection.py、test_browser_records.py、test_priority.py、test_metrics.py：离线行为测试。
-- verify_reproducibility.py：给定相同浏览器记录和固定配置的两次复现检查。
+只有复查标记时生成明确标记的review-report草稿；有完整内容证据时走verify/report。母版保留01–06，第05节完整明细固定为表格。Word导出安装`python -m pip install -e ".[export]"`；自动PDF另需LibreOffice，也可在Word中另存PDF。全部命令与输出见[使用说明](docs/usage.md)。
 
-```sh
-python test_browser_records.py
-python test_priority.py
-python test_metrics.py
-python test_collection.py
-python verify_reproducibility.py --input-root /local/records --config /local/fixed_config.json
-```
+## 目录与说明
 
-调用示例：“读取本仓库food-trend-weekly Skill，归档日期2026-12-05，每个平台60条；已有同日数据就继续补齐，完成采集并同步对应日期三份文件后停止，不筛选、不生成周报。” Skill是否自动加载取决于客户端，可直接指定其路径。
+| 位置 | 用途 |
+| --- | --- |
+| .agents/skills/food-trend-weekly/ | Codex执行指引，协调现有程序 |
+| config/ | collection.json采集与完整性；screening.json筛选；report.json报告设置 |
+| templates/weekly_report.md | Markdown母版 |
+| pipeline/ | 采集管理、标准化、筛选、核验、报告和导出程序 |
+| tests/ | 离线测试与重复运行检查 |
+| docs/ | [流程职责](docs/workflow.md)、[使用说明](docs/usage.md)、[数据格式](docs/data_format.md)、[采集规则](docs/collection.md) |
+| data/ | 本地日期归档、复查、成稿和运行记录；整个目录被Git忽略 |
+| viewer/ | 原有可复用查看器，目录保持原样 |
 
-现有脚本不自动操作浏览器、不绕过验证、不保证找全爆款。不完整记录补不齐就丢弃；完整性门槛和配额见采集规则，平台可能无法提供必需字段。没有定时任务或默认Google Docs发布。仓库维护遵循AGENTS.md，以新规则替换重复/过时内容；历史从Git追溯。
+平台页面操作分别见[抖音](docs/collection/douyin.md)、[小红书](docs/collection/xiaohongshu.md)、[B站](docs/collection/bilibili.md)。参数、字段与规则以对应文件为唯一来源，不在Skill里重复定义。
 
+## 数据与仓库维护
 
-三个平台均不限发布时间，不设置最近一周、最低24小时或年龄组。报告日期范围仅标识出刊周期；入选是采集时累计表现较高的案例，不代表本周新爆款。
+GitHub只同步程序、配置、母版、说明与测试。data整个目录不再跟踪；本地文件不会因忽略规则被清理，历史Git记录不重写。Cookie、登录令牌、浏览器会话、运行缓存也不提交。
 
+拉取仓库后需要自己的本地数据；测试使用合成记录，不要求附带真实样本。旧run保持冻结，不因目录调整重写manifest或重新计算已归档结果。维护遵循[AGENTS.md](AGENTS.md)。
+
+调用示例：“使用本仓库food-trend-weekly，归档日期2026-12-05，每平台60条，完成采集后停止；数据只保存本地。” Skill是否自动加载由客户端决定，也可直接指定其路径。

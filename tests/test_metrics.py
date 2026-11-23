@@ -1,3 +1,7 @@
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from pipeline.policy import load_policy
 """Precision preservation and display parsing, without platform access."""
 import unittest
 from pipeline.metrics import observe_metric, observe_metrics

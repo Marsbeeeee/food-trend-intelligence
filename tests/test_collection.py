@@ -1,3 +1,7 @@
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from pipeline.policy import load_policy
 """Offline behavior checks for date archives, checkpoints and pipeline import."""
 from copy import deepcopy
 import json
@@ -9,8 +13,8 @@ import unittest
 
 from pipeline.collection import Collection, archive_folder, discover_inputs, PLATFORMS
 
-ROOT = Path(__file__).resolve().parent
-POLICY = json.loads((ROOT / 'config/discovery_policy.json').read_text(encoding='utf-8'))
+ROOT = Path(__file__).resolve().parents[1]
+POLICY = load_policy()
 
 
 def record(short='dy', content_id='123456789012345678901234', likes=100):
@@ -116,10 +120,10 @@ class CollectionTests(unittest.TestCase):
     def test_new_layout_pipeline_import_and_legacy_ambiguity(self):
         for short in PLATFORMS:
             self.attempt(short); self.job.append(short, [record(short)])
-        config = json.loads((ROOT/'config/weekly.json').read_text(encoding='utf-8'))
+        config = json.loads((ROOT/'config/report.json').read_text(encoding='utf-8'))
         config.update(observation_cutoff='2026-11-22T20:00:00+08:00')
         cfg = self.root/'config.json'; cfg.write_text(json.dumps(config), encoding='utf-8')
-        command = [sys.executable, str(ROOT/'run_pipeline.py'), 'discovery', '--run-id', 'archive-import',
+        command = [sys.executable, str(ROOT/'run.py'), 'discovery', '--run-id', 'archive-import',
                    '--run-root', str(self.root/'runs'), '--config', str(cfg), '--input-root', str(self.job.folder)]
         subprocess.run(command, check=True, capture_output=True)
         summary = json.loads((self.root/'runs/archive-import/discovery.json').read_text(encoding='utf-8'))
@@ -137,7 +141,7 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(self.job.path('dy').read_bytes(), before)
 
     def test_cli_status_and_batch_limit(self):
-        result = subprocess.run([sys.executable, str(ROOT/'collection.py'), 'status', '--date', self.job.date,
+        result = subprocess.run([sys.executable, str(ROOT/'run.py'), 'collect', 'status', '--date', self.job.date,
                                  '--data-root', str(self.root)], check=True, capture_output=True)
         self.assertEqual(json.loads(result.stdout)['archive_date'], '2026-11-22')
         with self.assertRaisesRegex(ValueError, 'batch_size'):

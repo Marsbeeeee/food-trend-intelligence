@@ -28,39 +28,6 @@
     "quota_rule": "All three platforms use configured keywords, target 20 per keyword and 60 unique complete records per platform; shortfalls may use other configured keywords, never exceed platform target.",
     "publication_scope": "all_time"
   },
-  "ranking": {
-    "min_cohort": 10,
-    "top_fraction": 0.2,
-    "min_primary_hits": 2,
-    "max_candidates_per_platform": 12,
-    "max_per_author": 2,
-    "fill_with_single_metric_backups": true,
-    "platform_metrics": {
-      "douyin": [
-        "likes",
-        "favorites",
-        "shares"
-      ],
-      "xiaohongshu": [
-        "likes",
-        "favorites"
-      ],
-      "bilibili": [
-        "views",
-        "likes",
-        "favorites",
-        "coins",
-        "shares"
-      ]
-    },
-    "supplemental_metrics": [
-      "comments"
-    ],
-    "absolute_thresholds": null,
-    "cross_platform_score": false,
-    "group_by": "platform",
-    "comparison_basis": "cumulative_display_values; approximate coarse ordering; lower bounds require review"
-  },
   "completeness": {
     "required_metrics": {
       "xiaohongshu": [

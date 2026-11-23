@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "food-trend-intelligence"
+version = "0.1.0"
+description = "Date-archived food video screening and review-backed reports"
+requires-python = ">=3.11"
+dependencies = ["tzdata; sys_platform == 'win32'"]
+
+[project.optional-dependencies]
+export = ["python-docx", "pypdf"]
+
+[project.scripts]
+food-trend = "pipeline.cli:main"
+
+[tool.setuptools]
+packages = ["pipeline"]

@@ -1,15 +1,12 @@
-# Only user-requested date archives and explicit priority exports are eligible for version control.
-data/*
-!data/[0-9][0-9][0-9][0-9]/
-data/[0-9][0-9][0-9][0-9]/*
-!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/
-data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/*
-!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/douyin_original.jsonl
-!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/xiaohongshu_original.jsonl
-!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/bilibili_original.jsonl
-!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/priority_[0-9]*.jsonl
-!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/priority_[0-9]*_repo.md
+# Local archives, reviews, reports, checkpoints and frozen runs never enter Git.
+/data/
+/.vscode/
 __pycache__/
+*.py[cod]
 .venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
 *.local.json
 *.log

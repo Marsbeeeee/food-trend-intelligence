@@ -1,3 +1,7 @@
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from pipeline.policy import load_policy
 """Multi-metric shortlist behavior; no live collection or content verification."""
 from copy import deepcopy
 import json
@@ -6,7 +10,7 @@ import unittest
 
 from pipeline.priority import prioritize
 
-POLICY = json.loads((Path(__file__).parent/'config/discovery_policy.json').read_text(encoding='utf-8'))
+POLICY = load_policy()
 
 
 def record(i, platform='douyin', author=None):

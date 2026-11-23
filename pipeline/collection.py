@@ -11,9 +11,10 @@ import sys
 import tempfile
 from urllib.parse import parse_qs, urlsplit
 
-from pipeline.browser_records import approximate_display, completeness_errors
+from pipeline.normalize import approximate_display, completeness_errors
 
-ROOT = Path(__file__).resolve().parents[1]
+from pipeline.paths import ROOT
+from pipeline.policy import load_policy
 PLATFORMS = {
     'dy': ('douyin', 'douyin_original.jsonl', 'douyin.com'),
     'xhs': ('xiaohongshu', 'xiaohongshu_original.jsonl', 'xiaohongshu.com'),
@@ -116,7 +117,7 @@ class Collection:
     def load_state(self, short):
         path = self.state_path(short)
         if not path.exists():
-            raise ValueError('Run collection.py init for this archive date first')
+            raise ValueError('Run run.py collect init for this archive date first')
         return json.loads(path.read_text(encoding='utf-8'))
 
     def checked_rows(self, short, policy):
@@ -264,14 +265,14 @@ def discover_inputs(input_root, shorts):
     return inputs
 
 
-def main():
+def main(argv=None):
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['init', 'status', 'attempt', 'append', 'reject', 'audit'])
     parser.add_argument('--date', required=True, help='Archive date YYYY-MM-DD, not video publication or report period')
     parser.add_argument('--data-root', type=Path, default=ROOT / 'data')
-    parser.add_argument('--policy', type=Path, default=ROOT / 'config/discovery_policy.json')
+    parser.add_argument('--policy', type=Path, default=ROOT / 'config/collection.json')
     parser.add_argument('--target', type=int)
     parser.add_argument('--platform', choices=PLATFORMS)
     parser.add_argument('--batch', type=Path)
@@ -280,9 +281,9 @@ def main():
     parser.add_argument('--retry', action='store_true')
     parser.add_argument('--reason')
     parser.add_argument('--show-ids', action='store_true')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
-        collection = Collection(args.data_root, args.date, json.loads(args.policy.read_text(encoding='utf-8')))
+        collection = Collection(args.data_root, args.date, load_policy(args.policy))
         if args.command == 'init':
             result = collection.init(args.target)
         elif args.command in ('status', 'audit'):

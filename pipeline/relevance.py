@@ -1,7 +1,5 @@
-"""Shared deterministic screening helpers."""
-from urllib.parse import urlsplit, urlunsplit
+"""Versioned title/description food-relevance rules."""
 import re
-
 FOOD_TERMS = (
     "美食", "吃", "餐", "饭", "菜", "面", "饼", "肉", "鱼", "虾", "蛋", "甜品", "奶茶",
     "咖啡", "火锅", "烧烤", "小吃", "早餐", "夜市", "厨房", "烘焙", "点心", "饮料",
@@ -15,13 +13,6 @@ NON_FOOD_PATTERNS = (
     r'烘焙.{0,8}(贴图|材质)|(贴图|材质).{0,8}烘焙',
     r'(游戏|模拟人生|星露谷).{0,20}(模组|\bmod\b)|(模组|\bmod\b).{0,20}(游戏|模拟人生|星露谷)',
 )
-
-def canonical_url(url: str | None) -> str | None:
-    if not url:
-        return None
-    parts = urlsplit(url)
-    return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip("/"), "", ""))
-
 
 def food_relevance(row: dict) -> str:
     text = (row.get("title") or "") + " " + (row.get("description") or "")
