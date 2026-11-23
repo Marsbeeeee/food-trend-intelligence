@@ -1,12 +1,12 @@
-# Data stays local except this explicitly requested archive.
+# Only user-requested original date archives are eligible for version control.
 data/*
-!data/2026/
-data/2026/*
-!data/2026/1122/
-data/2026/1122/*
-!data/2026/1122/douyin_original.jsonl
-!data/2026/1122/xiaohongshu_original.jsonl
-!data/2026/1122/bilibili_original.jsonl
+!data/[0-9][0-9][0-9][0-9]/
+data/[0-9][0-9][0-9][0-9]/*
+!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/
+data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/*
+!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/douyin_original.jsonl
+!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/xiaohongshu_original.jsonl
+!data/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]/bilibili_original.jsonl
 __pycache__/
 .venv/
 *.local.json

@@ -1,6 +1,8 @@
 # 统一数据格式
 
-本地按xhs/、dy/、bili/分别存JSONL，一行一条browser_video_v1。视频身份为平台:原视频ID，ID始终字符串；完整原始快照追加保存，跨run尚不自动归并。
+原始归档按data/YYYY/MMDD/分别存三份JSONL，一行一条browser_video_v1；文件名由pipeline/collection.py的PLATFORMS定义。归档日期用用户指定日期，未指定时取北京时间当天，一次确定后固定；它不是视频发布日期或报告周期。视频身份为平台:原视频ID，ID始终字符串。同日去重追加并保留第一次完整观测，不同日期分别保留快照，不跨日期删除或覆盖。
+
+三份_original.jsonl是浏览器观测字段的统一封装，尚未经过互动排名和原视频内容核验；不是MediaCrawler导出，也不代表已认定的爆款。进度、尝试日志与冻结配置在data/collection_state/YYYY-MM-DD/，只留本地。操作步骤见COLLECTION_STANDARD.md。
 
 ## 必需观测
 |字段|要求|

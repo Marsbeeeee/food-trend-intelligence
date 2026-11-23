@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from pipeline.common import food_relevance, canonical_url
 from pipeline.browser_records import normalize_browser, completeness_errors, approximate_display
 from pipeline.priority import prioritize
+from pipeline.collection import discover_inputs
 
 ROOT=Path(__file__).resolve().parent
 def read(p): return json.loads(p.read_text(encoding='utf-8'))
@@ -41,12 +42,10 @@ def main():
         policy=read(ROOT/cfg.get('discovery_policy','config/discovery_policy.json'))
         cfg['discovery_description']=str(policy['collection']['platform_routes'])
         if not a.input_root:p.error('--input-root required')
-        inputs=[]
-        for short,platform in [('xhs','xiaohongshu'),('dy','douyin'),('bili','bilibili')]:
-            if short not in cfg.get('platforms',['xhs','dy','bili']):continue
-            found=sorted((a.input_root/short).rglob('*.jsonl'))
-            if not found:p.error('Missing '+short+' exports; resolve collection first')
-            inputs.extend((f,short,platform) for f in found)
+        try:
+            inputs=discover_inputs(a.input_root,cfg.get('platforms',['xhs','dy','bili']))
+        except ValueError as error:
+            p.error(str(error))
         run.mkdir(parents=True);raw=[];discard_reasons={};discarded=0;accepted_counts={};seen_ids=set()
         for i,(f,short,platform) in enumerate(inputs):
             dest=run/'source'/short/f'{i}_{f.name}';dest.parent.mkdir(parents=True,exist_ok=True)
