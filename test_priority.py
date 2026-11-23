@@ -9,4 +9,6 @@ assert len(out)==10
 assert not prioritize(records[:9],p)
 assert not prioritize([{**r,'metrics':{'likes':None}} for r in records],p)
 assert all(all(x['metric'] in ('likes','coins') for x in r['reasons']) for r in out)
+mixed=[{**r,'published_at':None if i%2 else '2020-01-01T00:00:00+08:00'} for i,r in enumerate(records)]
+assert prioritize(mixed,p)==out
 print('Priority: metric union, small cohorts and null metrics passed')

@@ -1,34 +1,14 @@
 """Adapt explicitly observed browser evidence. Never infer dates or missing metrics."""
 import hashlib, re
-from datetime import datetime, timedelta
+from datetime import datetime
 
 def approximate_display(value):
     return isinstance(value,str) and re.fullmatch(r'\d+(?:\.\d+)?(?:万|亿|[kKmMwW])\+?|\d+\+',value.strip()) is not None
 
-def publication_bounds(r,tz):
-    """Bounds express uncertainty, never a fabricated publication instant."""
-    if r.get('published_at'):
-        d=datetime.fromisoformat(r['published_at'])
-        if d.tzinfo is None:raise ValueError('Publication timezone required')
-        return d,d
-    d=datetime.strptime(r.get('published_date') or r.get('published_date_start') or '', '%Y-%m-%d').replace(tzinfo=tz)
-    last=datetime.strptime(r.get('published_date') or r.get('published_date_end') or '', '%Y-%m-%d').replace(tzinfo=tz)
-    if last<d:raise ValueError('Invalid publication range')
-    return d,last+timedelta(days=1)-timedelta(microseconds=1)
-
-def publication_decision(r,start,end,cutoff,tz):
-    lo,hi=publication_bounds(r,tz)
-    if lo<start or hi>=end:return 'outside_or_uncertain_window',None
-    youngest=(cutoff-hi).total_seconds()/3600
-    oldest=(cutoff-lo).total_seconds()/3600
-    if youngest<24:return 'under_or_uncertain_24h',None
-    band='24–72h' if oldest<72 else '72h–7d' if youngest>=72 else 'age_uncertain'
-    return None,band
-
 def completeness_errors(raw, policy):
     """Return reasons only; rejected payloads must not enter a run."""
     r=raw['raw_record']; errors=[]
-    for k in ('content_id','url','source_url','title','author','captured_at','published_at_evidence'):
+    for k in ('content_id','url','source_url','title','author','captured_at'):
         if not isinstance(r.get(k),str) or not r[k].strip():errors.append('missing_'+k)
     for k in ('url','source_url'):
         if not isinstance(r.get(k),str) or not r[k].startswith('https://'):errors.append('invalid_'+k)
@@ -36,12 +16,10 @@ def completeness_errors(raw, policy):
         try:
             if datetime.fromisoformat(r.get(k) or '').tzinfo is None:raise ValueError()
         except (TypeError,ValueError):errors.append('invalid_'+k)
-    try:
-        from zoneinfo import ZoneInfo
-        lo,hi=publication_bounds(r,ZoneInfo('Asia/Shanghai'))
-        if 'invalid_captured_at' not in errors and lo>datetime.fromisoformat(r['captured_at']):errors.append('publication_after_capture')
-    except (ValueError,TypeError):errors.append('invalid_publication')
-    if '编辑' in str(r.get('published_at_display','')):errors.append('edited_date_not_publication')
+    if r.get('published_at'):
+        try:
+            if datetime.fromisoformat(r['published_at']).tzinfo is None:raise ValueError()
+        except (ValueError,TypeError):errors.append('invalid_publication_format')
     if r.get('content_type')!='video':errors.append('not_confirmed_video')
     if r.get('detail_status')!='complete':errors.append('detail_incomplete')
     if r.get('schema')!='browser_video_v1':errors.append('invalid_schema')

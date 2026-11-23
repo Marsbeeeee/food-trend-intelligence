@@ -1,40 +1,31 @@
 # 统一数据格式
 
-## 文件与身份
-本地输入按xhs/、dy/、bili/分目录保存JSONL，一行一条。目录分别映射xiaohongshu、douyin、bilibili；所有平台使用browser_video_v1。视频身份为平台:原视频ID，ID必须字符串。原始完整快照追加保存，不能覆盖旧互动值；跨run尚不自动归并。
+本地按xhs/、dy/、bili/分别存JSONL，一行一条browser_video_v1。视频身份为平台:原视频ID，ID始终字符串；完整原始快照追加保存，跨run尚不自动归并。
 
-## 完整记录字段
+## 必需观测
 |字段|要求|
 |---|---|
 |schema|browser_video_v1|
 |content_id|原视频ID字符串|
-|url|实际打开成功的完整HTTPS详情链接，保留必要访问参数|
-|source_url|实际发现入口的完整HTTPS链接|
-|keyword|三个平台均填写实际使用的配置关键词；source_url保存实际搜索结果页|
-|search_conditions|实际使用的类型、日期筛选、排序原文；不可用选项注明unsupported，不假设启用|
-|title、author|非空页面标题、作者名|
-|author_id|可选字符串，不能确认则null|
+|url|已实际打开成功的完整HTTPS详情链接，保留必要访问参数|
+|source_url|实际关键词结果页完整HTTPS链接|
+|keyword|实际使用的配置关键词，三个平台都必须填写|
+|search_conditions|实际类型、排序；时间条件为不限。不可用或未成功启用的选项如实注明|
+|title、author|页面标题、作者名，非空|
 |content_type|video，须实际确认|
-|published_at|可取得时保存带时区的首次发布时间，否则null|
-|published_date|仅能确认首次发布日期时保存YYYY-MM-DD；有精确时间则可省略|
-|published_date_start、published_date_end|仅能保守确定日期范围时，两项保存YYYY-MM-DD，保留原文和推导说明，不当作精确日期|
-|published_at_evidence|证明首次发布时间的页面原文/证据说明，非空|
-|published_at_display|页面日期展示原文，可选|
-|captured_at|实际读取指标的精确ISO时间，带时区|
-|metrics|必须包含views、likes、coins、favorites、comments、shares六个键|
-|metrics_display|可选，保存页面展示原文；约数为必需指标的有效观测，精确值仍为null|
-|detail_status|complete，表示浏览时已人工核查以上内容|
+|captured_at|实际读取指标时刻，ISO格式带时区|
+|metrics|六个键views/likes/coins/favorites/comments/shares，精确非负整数或null|
+|metrics_display|页面原文；必需指标只有约数时，metrics填null，这里保留如1.2万、10万+|
+|detail_status|complete，表示浏览时已核查必需信息|
 
-必需指标由config/discovery_policy.json统一定义：小红书点赞/收藏/评论；抖音再加分享；B站六项全部。必需项必须有精确非负整数（0有效），或metrics中填null并在metrics_display保存原始约数，如1.2万、10万+。非必需项不能取得则null，不能用0补缺；约数不能转换成伪精确整数。没有精确时间可保留有证据的首次发布日期；MM-DD只在本周期年份唯一可确定时补年并说明。相对日期不能猜成精确时间；仅编辑日期仍丢弃。脚本验证结构，链接能否打开及证据是否真实仍由Codex实查。
+核心指标唯一配置见config/discovery_policy.json：小红书点赞/收藏/评论；抖音加分享；B站六项全部。0有效，不能用0补缺；约数不能转成伪精确整数。缺失核心字段补不齐就丢弃，不进入待补池。脚本验证结构不证明链接可访问或证据真实，Codex须实查。
 
-缺项先补全，无法补全就丢弃，不进入正式输入或候选队列。导入遇到旧的不完整记录只累计discard_reasons，不把该记录复制进run。原有用户本地文件不自动删除。
+## 可选背景信息
+author_id、published_at、published_date、published_date_start/end、published_at_display、published_at_evidence均可为空。能确认首次精确时间就保存带时区published_at；只知道日期就存日期；只知道相对时间或编辑时间就保留展示原文，不伪装首次发布时间。无时间窗口，不为筛选需要推算日期区间；未知日期、编辑日期、旧视频和不足24小时均不构成排除理由。合法的已有日期字段继续保留，不覆盖本地历史数据。
 
-## 核验记录 checks.jsonl
-每条须含record_id（review_queue中）、operator、checked_at、evidence_url、author、published_at、published_date或published_date_start/end（必须与源记录精度一致）、content_summary、is_video=true、food_relevant=true、intelligence_type、performance_basis、metric。metric含name/value/captured_at；约数用value=null、display=原文，name为六项指标之一。intelligence_type为single_video或trend，后者至少2个independent_author_keys及独立来源说明。form_observation须基于原视频或可靠字幕。核验不能编造缺失事实。
+## 核验与输出
+checks.jsonl须含record_id（review_queue中）、operator、checked_at、evidence_url、author、content_summary、is_video=true、food_relevant=true、intelligence_type、performance_basis、metric。日期字段可选，但填写时须与源记录精度一致。metric含name/value/captured_at，约数使用value=null、display=原文。intelligence_type为single_video或trend；trend另需至少2个independent_author_keys及独立来源说明。form_observation必须基于原视频或可靠字幕。
 
-日期区间跨出周期或无法确认至少24小时的记录在screen排除；跨72小时边界保留age_uncertain供核验，不进入自动年龄组排名。约数仅供人工比较，不用于精确前五排名。
+discovery.json统计完整条数和丢弃原因；source/只存完整记录；screened_candidates保存去留理由；review_queue只含keep；priority_queue按同平台累计精确指标产生，约数供人工比较；verified_cases保存通过字段检查的核验记录；report_input保留条目编号和视频身份对应。没有发布时间筛选、最低年龄或年龄组。
 
-## 输出
-discovery.json给完整条数和丢弃原因汇总；source/只存通过完整性检查的记录。screened_candidates保存完整记录的去留理由；review_queue只含keep；priority_queue是样本内互动优先级；verified_cases为通过字段检查的核验记录；report_input保留条目编号和视频身份对应关系。完整数据不代表已被证实为爆款。
-
-相对N天前如不能确定单日，可取采集北京时间日期减N天并向两侧各放宽一天的日期范围；N小时前用保守区间，不能猜为精确时刻。范围必须整体满足窗口和24小时门槛，跨72小时不强行分组。该范围是保守假设，原始日期原文和推导方法必须保留；有编辑标记仍不收录。
+报告编号周期与视频发布日期范围分离。累计互动不是增长速度，旧视频可能更占优势，不能把本周采到的旧内容写成本周新爆款。

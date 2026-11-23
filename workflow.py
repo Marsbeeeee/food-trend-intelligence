@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from pipeline.common import food_relevance, canonical_url
-from pipeline.browser_records import normalize_browser, completeness_errors, publication_decision, approximate_display
+from pipeline.browser_records import normalize_browser, completeness_errors, approximate_display
 from pipeline.priority import prioritize
 
 ROOT=Path(__file__).resolve().parent
@@ -32,13 +32,12 @@ def main():
     if a.stage=='discovery':
         if run.exists(): p.error('Run exists; choose a new ID')
         cfg=read(a.config)
-        if cfg.get('window_mode')=='rolling_7_days':
-            if not cfg.get('observation_cutoff'):p.error('Fix observation_cutoff before browsing')
-            anchor=stamp(cfg['observation_cutoff'])
-            cfg={**cfg,'observation_cutoff':anchor.isoformat(),'window_end':anchor.isoformat(),'window_start':(anchor-timedelta(days=7)).isoformat()}
-            print('Shared collection anchor: '+anchor.isoformat(),flush=True)
-        start,end,cutoff=[stamp(cfg[k]) for k in ('window_start','window_end','observation_cutoff')]
-        if start>=end or cutoff<start: p.error('Invalid date window')
+        if cfg.get('publication_scope')!='all_time':p.error('Use current all_time config; old publication windows are retired')
+        anchor=stamp(cfg['observation_cutoff']) if cfg.get('observation_cutoff') else datetime.now(ZoneInfo(cfg['timezone']))
+        cfg['observation_cutoff']=anchor.isoformat()
+        cfg['report_period_start']=cfg.get('report_period_start') or (anchor-timedelta(days=7)).isoformat()
+        cfg['report_period_end']=cfg.get('report_period_end') or anchor.isoformat()
+        if stamp(cfg['report_period_start'])>=stamp(cfg['report_period_end']):p.error('Invalid report issue period')
         policy=read(ROOT/cfg.get('discovery_policy','config/discovery_policy.json'))
         cfg['discovery_description']=str(policy['collection']['platform_routes'])
         if not a.input_root:p.error('--input-root required')
@@ -83,13 +82,9 @@ def main():
         if a.stage=='screen':
             if (run/'screen_manifest.json').exists():raise SystemExit('Already screened; start new run for changed rules')
             normalized=[normalize_browser(r,ZoneInfo(cfg['timezone'])) for r in rows(run/'raw_candidates.jsonl')]
-            start,end,cutoff=[stamp(cfg[k]) for k in ('window_start','window_end','observation_cutoff')]
             seen=set();screened=[]
             for r in normalized:
                 reasons=[];hard=False
-                reason,band=publication_decision(r,start,end,cutoff,ZoneInfo(cfg['timezone']))
-                if reason:reasons.append(reason)
-                r['age_band']=band
                 if r['content_type']!='video':reasons.append('type_unknown' if r['content_type']=='unknown' else 'not_video');hard|=r['content_type']=='image_text'
                 key=(r['platform'],r['content_id'] or canonical_url(r['url']))
                 if key[1] and key in seen:reasons.append('duplicate');hard=True
@@ -111,8 +106,6 @@ def main():
                 stamp(c['checked_at'])
                 original=candidates[c['record_id']]
                 if any(c.get(k)!=original.get(k) for k in ('published_at','published_date','published_date_start','published_date_end')):raise SystemExit('Check publication must match source precision')
-                reason,band=publication_decision(c,stamp(cfg['window_start']),stamp(cfg['window_end']),stamp(cfg['observation_cutoff']),ZoneInfo(cfg['timezone']))
-                if reason:raise SystemExit('Verified publication outside window or uncertain')
                 m=c['metric'];stamp(m['captured_at'])
                 if m['name'] not in ('views','likes','coins','comments','favorites','shares'):raise SystemExit('Invalid metric')
                 if m.get('value') is None:
@@ -132,22 +125,22 @@ def main():
             headings=re.findall(r'^## (0[1-8]｜.+)$',source,re.M)
             if len(headings)!=8:raise SystemExit('Template must contain 01–08')
             cases=read(run/'verified_cases.json')['cases']
-            start=stamp(cfg['window_start']).astimezone(ZoneInfo(cfg['timezone']))
-            last=stamp(cfg['window_end']).astimezone(ZoneInfo(cfg['timezone']))-timedelta(microseconds=1)
+            start=stamp(cfg['report_period_start']).astimezone(ZoneInfo(cfg['timezone']))
+            last=stamp(cfg['report_period_end']).astimezone(ZoneInfo(cfg['timezone']))-timedelta(microseconds=1)
             report_id=f'{start:%Y-%m%d}-{last:%m%d}' if start.year==last.year else f'{start:%Y-%m%d}-{last:%Y-%m%d}'
             source_records={r['record_id']:r for r in rows(run/'review_queue.jsonl')}
             cases=sorted(cases,key=lambda c:c['record_id'])
             cases=[{**c,'entry_id':f'{report_id}-{i:03d}','video_key':source_records[c['record_id']]['platform']+':'+str(source_records[c['record_id']]['content_id'] or canonical_url(source_records[c['record_id']]['url']) or c['record_id'])} for i,c in enumerate(cases,1)]
-            parts=['# 视频热点情报周报',f'报告周期：{cfg["window_start"]} 至 {cfg["window_end"]}（结束时刻不含）；观察截止：{cfg["observation_cutoff"]}。']
+            parts=['# 视频热点情报周报',f'报告周期：{cfg["report_period_start"]} 至 {cfg["report_period_end"]}（仅为报告编号周期，不限制视频发布日期）；运行基准：{cfg["observation_cutoff"]}。']
             parts.insert(1,'周报编号：'+report_id)
             for i,h in enumerate(headings,1):
                 parts.append('## '+h)
-                if i==1:parts.append(f'经核验情报 {len(cases)} 条（热门单视频 {sum(c["intelligence_type"]=="single_video" for c in cases)}；传播趋势 {sum(c["intelligence_type"]=="trend" for c in cases)}）。采集范围：{cfg["discovery_description"]}。覆盖率未知。')
+                if i==1:parts.append(f'经核验情报 {len(cases)} 条（热门单视频 {sum(c["intelligence_type"]=="single_video" for c in cases)}；传播趋势 {sum(c["intelligence_type"]=="trend" for c in cases)}）。采集范围：{cfg["discovery_description"]}。覆盖率未知。视频发布时间不限，互动为采集时累计值；入选不代表本周新爆款，旧内容可能因累积时间更长而占优。')
                 elif i in (2,6):parts.extend([f'- [{c["entry_id"]}]({c["evidence_url"]})：{c["content_summary"]}' for c in cases] or ['暂无通过核验的条目。'])
                 elif i==3:parts.extend([f'- {c["entry_id"]}：{c.get("form_observation") or "未获取"}' for c in cases] or ['未获取。'])
                 elif i==4:
                     for c in cases:
-                        m=c['metric'];parts.extend(['### '+c['entry_id'],c['content_summary'],f'作者：{c["author"]}；发布时间：{c.get("published_at") or c.get("published_date") or str(c.get("published_date_start"))+" 至 "+str(c.get("published_date_end"))}；情报类型：{c["intelligence_type"]}。',f'{m["name"]}：{m["value"] if m.get("value") is not None else str(m.get("display"))+"（约数/下限）"}，采集：{m["captured_at"]}；核验：{c["checked_at"]}。',f'表现依据：{c["performance_basis"]}',f'原视频：{c["evidence_url"]}'])
+                        m=c['metric'];parts.extend(['### '+c['entry_id'],c['content_summary'],f'作者：{c["author"]}；发布时间：{c.get("published_at") or c.get("published_date") or (str(c.get("published_date_start"))+" 至 "+str(c.get("published_date_end")) if c.get("published_date_start") else source_records[c["record_id"]].get("published_at_raw") or "未知")}；情报类型：{c["intelligence_type"]}。',f'{m["name"]}：{m["value"] if m.get("value") is not None else str(m.get("display"))+"（约数/下限）"}，采集：{m["captured_at"]}；核验：{c["checked_at"]}。',f'表现依据：{c["performance_basis"]}',f'原视频：{c["evidence_url"]}'])
                 elif i==5:parts.append('缺少可比历史快照，跨周变化无法判断。')
                 elif i==7:parts.append('仅引用核验记录；单视频与趋势分别计数，不同平台指标不混合排名；未知信息不补数。')
                 else:parts.append('状态：待人工审核。目标 20–30 条；不足时按实际数量报告。')
@@ -157,7 +150,7 @@ def main():
             write(run/'report_input.json',{'report_id':report_id,'cases':cases,'template_sha256':sha(template)})
             (run/f'{report_id}.md').write_text(text,encoding='utf-8')
             output=['report.md',f'report_{n}.md',f'{report_id}.md','report_input.json']
-    write(run/f'{a.stage}_manifest.json',{'version':'2.0.0','stage':a.stage,'outputs':{f:sha(run/f) for f in output}})
+    write(run/f'{a.stage}_manifest.json',{'version':'4.0.0','stage':a.stage,'outputs':{f:sha(run/f) for f in output}})
     print(json.dumps({'stage':a.stage,'run':str(run),'outputs':output},ensure_ascii=False))
 
 if __name__=='__main__':main()

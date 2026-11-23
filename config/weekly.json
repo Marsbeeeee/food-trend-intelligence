@@ -1,17 +1,17 @@
 {
-  "schema_version": "3.0",
+  "schema_version": "4.0",
   "timezone": "Asia/Shanghai",
-  "window_start": null,
-  "window_end": null,
   "observation_cutoff": null,
-  "filter_version": "1.0.0",
+  "filter_version": "4.0.0",
   "template": "视频热点情报周报_母版.md",
   "discovery_policy": "config/discovery_policy.json",
-  "window_mode": "rolling_7_days",
   "collection_method": "direct_browser",
   "platforms": [
     "xhs",
     "dy",
     "bili"
-  ]
+  ],
+  "publication_scope": "all_time",
+  "report_period_start": null,
+  "report_period_end": null
 }

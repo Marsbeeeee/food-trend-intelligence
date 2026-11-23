@@ -1,5 +1,5 @@
 {
-  "version": "3.2",
+  "version": "4.0",
   "purpose": "爆款候选发现，非爆款认证",
   "collection": {
     "keywords": [
@@ -13,27 +13,23 @@
     "schedule": {
       "timezone": "Asia/Shanghai",
       "preferred_day": "Sunday evening (manual preference only)",
-      "publication_range": "[shared_anchor - 7 days, shared_anchor); exclude age < 24 hours",
-      "minimum_age_hours": 24,
       "automatic_schedule": false
     },
     "platform_routes": {
-      "douyin": "ONE_WEEK + MOST_LIKE; exact timestamps checked locally; rolling platform boundary may differ slightly",
-      "bilibili": "MOST_CLICK with explicit epoch bounds derived from shared anchor",
-      "xiaohongshu": "关键词搜索；优先实际可用的视频类型、最近一周、最多点赞选项；记录实际筛选状态，缺失选项不声称已启用；Python复核日期"
+      "douyin": "关键词搜索＋最多点赞（实际可用时）；不设发布时间筛选",
+      "bilibili": "关键词搜索＋最多播放；不设发布时间筛选",
+      "xiaohongshu": "关键词搜索＋视频类型，优先最多点赞（实际可用时）；不设发布时间筛选，综合排序如实注明"
     },
     "method": "direct_browser",
     "target_complete_per_platform": 60,
     "target_per_keyword": 20,
     "max_detail_attempts_per_platform": 120,
-    "quota_rule": "All three platforms use configured keywords, target 20 per keyword and 60 unique complete records per platform; shortfalls may use other configured keywords, never exceed platform target."
+    "quota_rule": "All three platforms use configured keywords, target 20 per keyword and 60 unique complete records per platform; shortfalls may use other configured keywords, never exceed platform target.",
+    "publication_scope": "all_time"
   },
   "ranking": {
     "min_cohort": 10,
     "top_k_per_metric": 5,
-    "age_bands_hours": [
-      72
-    ],
     "platform_metrics": {
       "douyin": [
         "likes",
@@ -58,7 +54,7 @@
     },
     "absolute_thresholds": null,
     "cross_platform_score": false,
-    "minimum_age_hours": 24
+    "group_by": "platform"
   },
   "completeness": {
     "required_metrics": {
@@ -84,6 +80,6 @@
     },
     "exact_metrics_only": false,
     "incomplete_action": "discard; aggregate reasons only; no pending pool",
-    "precision_rule": "Exact integers or original approximate display; publication timestamp or supported date; uncertain age stays ungrouped; edited-only dates rejected"
+    "precision_rule": "Publication metadata optional and observed only; exact integers or original approximate metric display; no publication-age filtering"
   }
 }

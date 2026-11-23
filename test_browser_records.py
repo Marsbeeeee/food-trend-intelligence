@@ -1,61 +1,53 @@
-"""Synthetic browser contract checks and four-stage integration; no live browsing."""
+"""All-time collection regression, completeness, reporting and reproducibility."""
 import json,subprocess,sys,tempfile
 from pathlib import Path
 from zoneinfo import ZoneInfo
-from pipeline.browser_records import normalize_browser, completeness_errors, publication_decision
-from datetime import datetime
+from pipeline.browser_records import normalize_browser, completeness_errors
 ROOT=Path(__file__).resolve().parent
+policy=json.loads((ROOT/'config/discovery_policy.json').read_text(encoding='utf-8'))
+base_record={'schema':'browser_video_v1','keyword':'美食','content_id':'123456789012345678901234','url':'https://example.com/video?id=1&required_parameter=keep','source_url':'https://example.com/search','title':'美食制作','author':'测试作者','content_type':'video','captured_at':'2026-11-22T20:00:00+08:00','detail_status':'complete','metrics':{'views':None,'likes':50,'coins':None,'favorites':20,'comments':0,'shares':None},'search_conditions':{'sort':'综合','date_filter':'不限'}}
+def wrap(record,platform='xiaohongshu'):
+    return {'source_platform':platform,'raw_record':record,'source_ref':{'sha256':'test','line':1}}
+for platform in ('xiaohongshu','douyin','bilibili'):
+    full={**base_record,'metrics':{k:0 for k in ('views','likes','coins','favorites','comments','shares')}}
+    assert not completeness_errors(wrap(full,platform),policy)
+    broken={**full,'metrics':{**full['metrics'],'comments':None}}
+    assert 'invalid_metric_comments' in completeness_errors(wrap(broken,platform),policy)
+assert 'invalid_keyword' in completeness_errors(wrap({**base_record,'keyword':None}),policy)
+normal=normalize_browser(wrap(base_record),ZoneInfo('Asia/Shanghai'))
+assert normal['url']==base_record['url'] and normal['content_id']==base_record['content_id']
+assert normal['search_conditions']==base_record['search_conditions']
+old={**base_record,'content_id':'old','published_at':'2020-01-01T00:00:00+08:00'}
+young={**base_record,'content_id':'young','published_at':'2026-11-22T19:00:00+08:00'}
+unknown={**base_record,'content_id':'unknown','published_at_display':'编辑于2天前'}
+rounded={**base_record,'content_id':'rounded','metrics':{**base_record['metrics'],'likes':None},'metrics_display':{'likes':'1.2万'}}
+invalid={**base_record,'content_id':'incomplete','metrics':{**base_record['metrics'],'favorites':None}}
 with tempfile.TemporaryDirectory() as temp:
-    base=Path(temp);inputs=base/'input/xhs';inputs.mkdir(parents=True)
-    record={'schema':'browser_video_v1','content_id':'123456789012345678901234','url':'https://example.com/video?id=1&required_parameter=keep','source_url':'https://example.com/food','title':'美食家常菜','content_type':'video','captured_at':'2026-11-22T20:00:00+08:00','published_at':'2026-11-20T20:00:00+08:00','metrics':{'likes':50,'favorites':None}}
-    source={'source_platform':'xiaohongshu','source_ref':{'sha256':'test','line':1},'raw_record':record}
-    normalized=normalize_browser(source,ZoneInfo('Asia/Shanghai'))
-    assert normalized['url']==record['url'] and normalized['metrics']['favorites'] is None
-    assert normalized['content_id']==record['content_id']
-    try:
-        normalize_browser({**source,'raw_record':{**record,'metrics':{'likes':'1万'}}},ZoneInfo('Asia/Shanghai'))
-        raise AssertionError('Approximate metric accepted as exact')
-    except ValueError:pass
-    record.update(keyword='美食',author='测试作者',published_at_evidence='原页首次发布时间',detail_status='complete',metrics={'views':None,'likes':50,'coins':None,'favorites':20,'comments':0,'shares':None})
-    policy=json.loads((ROOT/'config/discovery_policy.json').read_text(encoding='utf-8'))
-    source['raw_record']=record
-    assert not completeness_errors(source,policy)
-    assert 'invalid_keyword' in completeness_errors({**source,'raw_record':{**record,'keyword':None}},policy)
-    rounded={**record,'content_id':'rounded-date','published_at':None,'published_date':'2026-11-19','metrics':{**record['metrics'],'likes':None},'metrics_display':{'likes':'1.2万'}}
-    assert not completeness_errors({**source,'raw_record':rounded},policy)
-    tz=ZoneInfo('Asia/Shanghai')
-    start=datetime.fromisoformat('2026-11-15T20:00:00+08:00');end=datetime.fromisoformat('2026-11-22T20:00:00+08:00')
-    assert publication_decision(rounded,start,end,end,tz)==(None,'age_uncertain')
-    assert publication_decision({**rounded,'published_date':'2026-11-15'},start,end,end,tz)[0]=='outside_or_uncertain_window'
-    assert publication_decision({**rounded,'published_date':'2026-11-21'},start,end,end,tz)[0]=='under_or_uncertain_24h'
-    assert completeness_errors({**source,'raw_record':{**rounded,'metrics_display':{'likes':'未知'}}},policy)
-    assert completeness_errors({**source,'raw_record':{**rounded,'published_at_display':'编辑于11-19'}},policy)
-    for platform in ('douyin','bilibili'):
-        full={**record,'keyword':'美食','metrics':{k:0 for k in ('views','likes','coins','favorites','comments','shares')}}
-        assert not completeness_errors({**source,'source_platform':platform,'raw_record':full},policy)
-        full['metrics']['shares']=None
-        assert 'invalid_metric_shares' in completeness_errors({**source,'source_platform':platform,'raw_record':full},policy)
-    unknown={**record,'content_id':'unknown-date','published_at':None,'published_at_display':'编辑于2天前'}
-    (inputs/'records.jsonl').write_text('\n'.join(json.dumps(x) for x in [record,unknown,rounded])+'\n',encoding='utf-8')
+    root=Path(temp);folder=root/'input/xhs';folder.mkdir(parents=True)
+    (folder/'records.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in (old,young,unknown,rounded,invalid)),encoding='utf-8')
     cfg=json.loads((ROOT/'config/weekly.json').read_text(encoding='utf-8'))
-    cfg.update(window_mode='fixed',timezone='Asia/Shanghai',platforms=['xhs'],collection_method='direct_browser',window_start='2026-11-15T20:00:00+08:00',window_end='2026-11-22T20:00:00+08:00',observation_cutoff='2026-11-22T20:00:00+08:00')
-    config=base/'config.json';config.write_text(json.dumps(cfg),encoding='utf-8')
-    for stage in ('discovery','screen','verify','report'):
-        subprocess.run([sys.executable,str(ROOT/'run_pipeline.py'),stage,'--run-id','test','--run-root',str(base/'runs'),'--config',str(config),'--input-root',str(base/'input')],check=True,capture_output=True)
-    result=[json.loads(x) for x in (base/'runs/test/screened_candidates.jsonl').read_text(encoding='utf-8').splitlines()]
-    assert [x['decision'] for x in result]==['keep','keep']
-    assert result[1]['age_band']=='age_uncertain' and result[1]['metrics']['likes'] is None
-    summary=json.loads((base/'runs/test/discovery.json').read_text(encoding='utf-8'))
-    assert summary['parsed']==2 and summary['discard_reasons']['invalid_publication']==1
-    assert 'unknown-date' not in (base/'runs/test/raw_candidates.jsonl').read_text(encoding='utf-8')
-    assert 'unknown-date' not in next((base/'runs/test/source/xhs').glob('*.jsonl')).read_text(encoding='utf-8')
-    assert (base/'runs/test/report.md').exists()
-    subprocess.run([sys.executable,str(ROOT/'verify_reproducibility.py'),'--input-root',str(base/'input'),'--config',str(config)],check=True,capture_output=True)
-    check={'record_id':result[1]['record_id'],'operator':'synthetic-test','checked_at':'2026-11-22T20:00:00+08:00','evidence_url':record['url'],'author':record['author'],'published_at':None,'published_date':'2026-11-19','content_summary':'美食测试','metric':{'name':'likes','value':None,'display':'1.2万','captured_at':record['captured_at']},'is_video':True,'food_relevant':True,'intelligence_type':'single_video','performance_basis':'Synthetic precision test, not actual evidence'}
-    check_path=base/'checks.jsonl';check_path.write_text(json.dumps(check)+'\n',encoding='utf-8')
-    for stage in ('verify','report'):
-        subprocess.run([sys.executable,str(ROOT/'run_pipeline.py'),stage,'--run-id','test','--run-root',str(base/'runs'),'--checks',str(check_path)],check=True,capture_output=True)
-    report=(base/'runs/test/report.md').read_text(encoding='utf-8')
-    assert '1.2万（约数/下限）' in report and '发布时间：2026-11-19' in report
-print('Browser records: platform completeness gates, zero values, incomplete discard, complete URL/string ID and four stages/reproducibility passed')
-
+    cfg.update(platforms=['xhs'],observation_cutoff='2026-11-22T20:00:00+08:00',report_period_start='2026-11-15T00:00:00+08:00',report_period_end='2026-11-22T00:00:00+08:00')
+    config=root/'config.json';config.write_text(json.dumps(cfg),encoding='utf-8')
+    def run(stage,extra=()):
+        subprocess.run([sys.executable,str(ROOT/'run_pipeline.py'),stage,'--run-id','test','--run-root',str(root/'runs'),'--config',str(config),'--input-root',str(root/'input'),*extra],check=True,capture_output=True)
+    for stage in ('discovery','screen','verify','report'):run(stage)
+    path=root/'runs/test'
+    result=[json.loads(x) for x in (path/'screened_candidates.jsonl').read_text(encoding='utf-8').splitlines()]
+    assert len(result)==4 and all(x['decision']=='keep' for x in result)
+    assert {x['content_id'] for x in result}=={'old','young','unknown','rounded'}
+    assert all('age_band' not in x for x in result)
+    summary=json.loads((path/'discovery.json').read_text(encoding='utf-8'))
+    assert summary['parsed']==4 and summary['discarded']==1
+    assert 'incomplete' not in (path/'raw_candidates.jsonl').read_text(encoding='utf-8')
+    checks=[]
+    for item in result:
+        c={'record_id':item['record_id'],'operator':'synthetic-test','checked_at':base_record['captured_at'],'evidence_url':item['url'],'author':base_record['author'],'content_summary':'美食测试','metric':{'name':'likes','value':item['metrics']['likes'],'display':item['metrics_display'].get('likes'),'captured_at':base_record['captured_at']},'is_video':True,'food_relevant':True,'intelligence_type':'single_video','performance_basis':'Synthetic cumulative-count test only'}
+        for k in ('published_at','published_date','published_date_start','published_date_end'):c[k]=item.get(k)
+        checks.append(c)
+    check_path=root/'checks.jsonl';check_path.write_text(''.join(json.dumps(c)+'\n' for c in checks),encoding='utf-8')
+    run('verify',('--checks',str(check_path)));run('report')
+    report=(path/'report.md').read_text(encoding='utf-8')
+    assert '2020-01-01' in report and '编辑于2天前' in report and '1.2万（约数/下限）' in report
+    assert '不限制视频发布日期' in report and '不代表本周新爆款' in report
+    subprocess.run([sys.executable,str(ROOT/'verify_reproducibility.py'),'--input-root',str(root/'input'),'--config',str(config)],check=True,capture_output=True)
+print('PASS: old, under-24h, unknown/edited dates kept; core omissions rejected; full reporting and reproducibility')
