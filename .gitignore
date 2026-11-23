@@ -1,4 +1,12 @@
-data/
+# Data stays local except this explicitly requested archive.
+data/*
+!data/2026/
+data/2026/*
+!data/2026/1122/
+data/2026/1122/*
+!data/2026/1122/douyin_original.jsonl
+!data/2026/1122/xiaohongshu_original.jsonl
+!data/2026/1122/bilibili_original.jsonl
 __pycache__/
 .venv/
 *.local.json
