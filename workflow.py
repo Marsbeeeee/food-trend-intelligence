@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from pipeline.common import food_relevance, canonical_url
-from pipeline.browser_records import normalize_browser, completeness_errors
+from pipeline.browser_records import normalize_browser, completeness_errors, publication_decision, approximate_display
 from pipeline.priority import prioritize
 
 ROOT=Path(__file__).resolve().parent
@@ -87,11 +87,9 @@ def main():
             seen=set();screened=[]
             for r in normalized:
                 reasons=[];hard=False
-                for k in ('published_at','captured_at'):
-                    if not r[k]:reasons.append(k+'_unknown')
-                if r['published_at'] and not(start<=stamp(r['published_at'])<end and stamp(r['published_at'])<=cutoff):reasons.append('outside_window');hard=True
-                r['observation_age_hours']=(cutoff-stamp(r['published_at'])).total_seconds()/3600
-                if r['observation_age_hours']<24:reasons.append('not_mature_24h');hard=True
+                reason,band=publication_decision(r,start,end,cutoff,ZoneInfo(cfg['timezone']))
+                if reason:reasons.append(reason)
+                r['age_band']=band
                 if r['content_type']!='video':reasons.append('type_unknown' if r['content_type']=='unknown' else 'not_video');hard|=r['content_type']=='image_text'
                 key=(r['platform'],r['content_id'] or canonical_url(r['url']))
                 if key[1] and key in seen:reasons.append('duplicate');hard=True
@@ -107,13 +105,19 @@ def main():
             output=['priority_queue.jsonl','normalized_candidates.jsonl','screened_candidates.jsonl','excluded.jsonl','review_queue.jsonl','filter_summary.json']
         elif a.stage=='verify':
             candidates={r['record_id']:r for r in rows(run/'review_queue.jsonl')};checks=rows(a.checks) if a.checks else []
-            required=['record_id','operator','checked_at','evidence_url','author','published_at','content_summary','metric','is_video','food_relevant','intelligence_type','performance_basis']
+            required=['record_id','operator','checked_at','evidence_url','author','content_summary','metric','is_video','food_relevant','intelligence_type','performance_basis']
             for c in checks:
                 if any(not c.get(k) for k in required) or c['record_id'] not in candidates:raise SystemExit('Incomplete or unknown check; see README')
-                stamp(c['checked_at']);published=stamp(c['published_at'])
-                if not(stamp(cfg['window_start'])<=published<stamp(cfg['window_end']) and published<=stamp(cfg['observation_cutoff'])):raise SystemExit('Verified publication outside window')
+                stamp(c['checked_at'])
+                original=candidates[c['record_id']]
+                if any(c.get(k)!=original.get(k) for k in ('published_at','published_date','published_date_start','published_date_end')):raise SystemExit('Check publication must match source precision')
+                reason,band=publication_decision(c,stamp(cfg['window_start']),stamp(cfg['window_end']),stamp(cfg['observation_cutoff']),ZoneInfo(cfg['timezone']))
+                if reason:raise SystemExit('Verified publication outside window or uncertain')
                 m=c['metric'];stamp(m['captured_at'])
-                if m['name'] not in ('views','likes','coins','comments','favorites','shares') or type(m['value']) is not int or m['value']<0:raise SystemExit('Invalid metric')
+                if m['name'] not in ('views','likes','coins','comments','favorites','shares'):raise SystemExit('Invalid metric')
+                if m.get('value') is None:
+                    if not approximate_display(m.get('display')):raise SystemExit('Missing metric display')
+                elif type(m['value']) is not int or m['value']<0:raise SystemExit('Invalid metric')
                 if not c['evidence_url'].startswith('https://') or c['is_video'] is not True or c['food_relevant'] is not True:raise SystemExit('Invalid evidence')
                 if c['intelligence_type'] not in ('single_video','trend'):raise SystemExit('Invalid intelligence type')
                 if c['intelligence_type']=='trend' and len(set(c.get('independent_author_keys',[])))<2:raise SystemExit('Trend requires independent authors')
@@ -143,7 +147,7 @@ def main():
                 elif i==3:parts.extend([f'- {c["entry_id"]}：{c.get("form_observation") or "未获取"}' for c in cases] or ['未获取。'])
                 elif i==4:
                     for c in cases:
-                        m=c['metric'];parts.extend(['### '+c['entry_id'],c['content_summary'],f'作者：{c["author"]}；发布时间：{c["published_at"]}；情报类型：{c["intelligence_type"]}。',f'{m["name"]}：{m["value"]}，采集：{m["captured_at"]}；核验：{c["checked_at"]}。',f'表现依据：{c["performance_basis"]}',f'原视频：{c["evidence_url"]}'])
+                        m=c['metric'];parts.extend(['### '+c['entry_id'],c['content_summary'],f'作者：{c["author"]}；发布时间：{c.get("published_at") or c.get("published_date") or str(c.get("published_date_start"))+" 至 "+str(c.get("published_date_end"))}；情报类型：{c["intelligence_type"]}。',f'{m["name"]}：{m["value"] if m.get("value") is not None else str(m.get("display"))+"（约数/下限）"}，采集：{m["captured_at"]}；核验：{c["checked_at"]}。',f'表现依据：{c["performance_basis"]}',f'原视频：{c["evidence_url"]}'])
                 elif i==5:parts.append('缺少可比历史快照，跨周变化无法判断。')
                 elif i==7:parts.append('仅引用核验记录；单视频与趋势分别计数，不同平台指标不混合排名；未知信息不补数。')
                 else:parts.append('状态：待人工审核。目标 20–30 条；不足时按实际数量报告。')

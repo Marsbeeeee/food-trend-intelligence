@@ -5,12 +5,13 @@ def prioritize(records, policy):
     result={}
     for r in records:
         if r["decision"]!="keep": continue
-        if not r.get("published_at") or not r.get("captured_at"): continue
-        age=r.get('observation_age_hours')
-        if age is None:age=(datetime.fromisoformat(r["captured_at"])-datetime.fromisoformat(r["published_at"])).total_seconds()/3600
-        if age<0: continue
-        edges=policy["ranking"]["age_bands_hours"]
-        band=next((str(e) for e in edges if age<e),"older")
+        band=r.get('age_band')
+        if band=='age_uncertain':continue
+        if not band:
+            if not r.get('published_at') or not r.get('captured_at'):continue
+            age=(datetime.fromisoformat(r['captured_at'])-datetime.fromisoformat(r['published_at'])).total_seconds()/3600
+            if age<0:continue
+            band='24–72h' if age<72 else '72h–7d'
         groups.setdefault((r["platform"],band),[]).append(r)
     for (platform,band), cohort in sorted(groups.items()):
         for name in policy["ranking"]["platform_metrics"][platform]:

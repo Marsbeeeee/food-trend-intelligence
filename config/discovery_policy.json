@@ -1,5 +1,5 @@
 {
-  "version": "3.0",
+  "version": "3.1",
   "purpose": "爆款候选发现，非爆款认证",
   "collection": {
     "keywords": [
@@ -82,7 +82,8 @@
         "shares"
       ]
     },
-    "exact_metrics_only": true,
-    "incomplete_action": "discard; aggregate reasons only; no pending pool"
+    "exact_metrics_only": false,
+    "incomplete_action": "discard; aggregate reasons only; no pending pool",
+    "precision_rule": "Exact integers or original approximate display; publication timestamp or supported date; uncertain age stays ungrouped; edited-only dates rejected"
   }
 }
