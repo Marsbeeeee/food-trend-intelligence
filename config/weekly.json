@@ -1,16 +1,11 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "3.0",
   "timezone": "Asia/Shanghai",
   "window_start": null,
   "window_end": null,
   "observation_cutoff": null,
-  "keywords": [
-    "美食",
-    "探店"
-  ],
   "filter_version": "1.0.0",
   "template": "视频热点情报周报_母版.md",
-  "discovery_description": "Codex直接浏览：抖音最近一周最多点赞；B站滚动七天最多播放；小红书美食频道，当场读取详情并保存完整链接。",
   "discovery_policy": "config/discovery_policy.json",
   "window_mode": "rolling_7_days",
   "collection_method": "direct_browser",

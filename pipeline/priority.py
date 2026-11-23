@@ -6,7 +6,8 @@ def prioritize(records, policy):
     for r in records:
         if r["decision"]!="keep": continue
         if not r.get("published_at") or not r.get("captured_at"): continue
-        age=(datetime.fromisoformat(r["captured_at"])-datetime.fromisoformat(r["published_at"])).total_seconds()/3600
+        age=r.get('observation_age_hours')
+        if age is None:age=(datetime.fromisoformat(r["captured_at"])-datetime.fromisoformat(r["published_at"])).total_seconds()/3600
         if age<0: continue
         edges=policy["ranking"]["age_bands_hours"]
         band=next((str(e) for e in edges if age<e),"older")
@@ -21,3 +22,4 @@ def prioritize(records, policy):
                 item=result.setdefault(r["record_id"],{"record_id":r["record_id"],"platform":platform,"title":r["title"],"url":r["url"],"metrics":r["metrics"],"age_band":band,"reasons":[],"status":"review_priority_only"})
                 item["reasons"].append({"metric":name,"rank":rank,"cohort_size":len(available),"value":r["metrics"][name]})
     return [result[k] for k in sorted(result)]
+

@@ -1,16 +1,12 @@
 {
-  "version": "2.0",
+  "version": "3.0",
   "purpose": "爆款候选发现，非爆款认证",
   "collection": {
     "keywords": [
       "美食",
       "家常菜",
-      "地方小吃",
-      "探店",
-      "甜品烘焙",
-      "美食挑战"
+      "探店"
     ],
-    "max_per_keyword_per_route": 20,
     "preferred_route": "平台实际支持的热度/点赞/播放排序；综合排序须注明不能视为热榜",
     "supplement_route": "不默认新增入口，需按实际平台方案记录",
     "record_actual_conditions": true,
@@ -26,7 +22,11 @@
       "bilibili": "MOST_CLICK with explicit epoch bounds derived from shared anchor",
       "xiaohongshu": "美食频道，打开详情记录；不保证同期热榜"
     },
-    "method": "direct_browser"
+    "method": "direct_browser",
+    "target_complete_per_platform": 60,
+    "target_per_keyword": 20,
+    "max_detail_attempts_per_platform": 120,
+    "quota_rule": "Count unique complete records only; per-keyword shortfalls may use other configured keywords, never exceed platform target; xhs food channel has no keyword quota."
   },
   "ranking": {
     "min_cohort": 10,
@@ -59,5 +59,30 @@
     "absolute_thresholds": null,
     "cross_platform_score": false,
     "minimum_age_hours": 24
+  },
+  "completeness": {
+    "required_metrics": {
+      "xiaohongshu": [
+        "likes",
+        "favorites",
+        "comments"
+      ],
+      "douyin": [
+        "likes",
+        "favorites",
+        "comments",
+        "shares"
+      ],
+      "bilibili": [
+        "views",
+        "likes",
+        "coins",
+        "favorites",
+        "comments",
+        "shares"
+      ]
+    },
+    "exact_metrics_only": true,
+    "incomplete_action": "discard; aggregate reasons only; no pending pool"
   }
 }

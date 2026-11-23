@@ -22,7 +22,7 @@ python run_pipeline.py verify --run-id 2026-1115-1121-test --checks /local/check
 python run_pipeline.py report --run-id 2026-1115-1121-test
 ```
 
-每次只执行用户指定阶段。结果在data/runs/<run-id>/，保留源记录与去留理由。Discovery和screen不覆盖；补核验后可重跑verify/report并保留版本。数据只在本地，GitHub维护代码/规则/母版。
+每次只执行用户指定阶段。结果在data/runs/<run-id>/，仅保留完整源记录与筛选理由。Discovery和screen不覆盖；补核验后可重跑verify/report并保留版本。数据只在本地，GitHub维护代码/规则/母版。
 周报编号为2026-1115-1121，条目追加-001；视频身份为平台:原ID。滚动时间在正文精确注明。没有跨批次候选池，修改来源/配置需新run。
 
 ## 文件
@@ -41,4 +41,5 @@ python verify_reproducibility.py --input-root /local/records --config /local/fix
 
 调用示例：“读取本仓库food-trend-weekly Skill，直接找美食高表现候选，先执行Discovery并保存完整详情后停止。” Skill是否自动加载取决于客户端，可直接指定其路径。
 
-现有脚本不自动操作浏览器、不绕过验证、不保证找全爆款。模糊日期会pending，公开字段不一定完整。没有定时任务或默认Google Docs发布。旧采集代码和固定107条样本依赖已移除；历史可从Git提交中查看。
+现有脚本不自动操作浏览器、不绕过验证、不保证找全爆款。不完整记录补不齐就丢弃；完整性门槛和配额见采集规则，平台可能无法提供必需字段。没有定时任务或默认Google Docs发布。仓库维护遵循AGENTS.md，以新规则替换重复/过时内容；历史从Git追溯。
+

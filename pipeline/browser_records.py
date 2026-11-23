@@ -1,6 +1,33 @@
 """Adapt explicitly observed browser evidence. Never infer dates or missing metrics."""
 import hashlib
 from datetime import datetime
+
+def completeness_errors(raw, policy):
+    """Return reasons only; rejected payloads must not enter a run."""
+    r=raw['raw_record']; errors=[]
+    for k in ('content_id','url','source_url','title','author','captured_at','published_at','published_at_evidence'):
+        if not isinstance(r.get(k),str) or not r[k].strip():errors.append('missing_'+k)
+    for k in ('url','source_url'):
+        if not isinstance(r.get(k),str) or not r[k].startswith('https://'):errors.append('invalid_'+k)
+    for k in ('captured_at','published_at'):
+        try:
+            if datetime.fromisoformat(r.get(k) or '').tzinfo is None:raise ValueError()
+        except (TypeError,ValueError):errors.append('invalid_'+k)
+    if not any(x in errors for x in ('invalid_captured_at','invalid_published_at')):
+        if datetime.fromisoformat(r['published_at'])>datetime.fromisoformat(r['captured_at']):errors.append('publication_after_capture')
+    if r.get('content_type')!='video':errors.append('not_confirmed_video')
+    if r.get('detail_status')!='complete':errors.append('detail_incomplete')
+    if r.get('schema')!='browser_video_v1':errors.append('invalid_schema')
+    metrics=r.get('metrics')
+    if not isinstance(metrics,dict):metrics={}
+    required=policy['completeness']['required_metrics'][raw['source_platform']]
+    for k in ('views','likes','coins','favorites','shares','comments'):
+        if k not in metrics:errors.append('missing_metric_key_'+k)
+        v=metrics.get(k)
+        if (k in required and v is None) or (v is not None and (type(v) is not int or v<0)):
+            errors.append('invalid_metric_'+k)
+    if raw['source_platform']!='xiaohongshu' and r.get('keyword') not in policy['collection']['keywords']:errors.append('invalid_keyword')
+    return errors
 def normalize_browser(raw,tz):
     r=raw["raw_record"];source=raw["source_ref"]
     if r.get("schema")!="browser_video_v1":raise ValueError("Expected browser_video_v1 record")
@@ -26,3 +53,4 @@ def normalize_browser(raw,tz):
         "captured_at":timestamp(r["captured_at"]),"metrics":metrics,"metrics_display":r.get("metrics_display",{}),
         "source_keyword":r.get("keyword"),"source_ref":source,"field_provenance":{"method":"direct_browser","source_url":r["source_url"],"published_at_evidence":r.get("published_at_evidence")},
         "detail_status":r.get("detail_status","pending")}
+
