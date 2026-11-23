@@ -129,8 +129,8 @@ def main():
             output=['verified_cases.json',f'verification_{n}.json']
         else:
             template=ROOT/cfg.get('template','视频热点情报周报_母版.md');source=template.read_text(encoding='utf-8')
-            headings=re.findall(r'^## (0[1-7]｜.+)$',source,re.M)
-            if [h[:2] for h in headings]!=[f'{i:02d}' for i in range(1,8)]:raise SystemExit('Template must contain 01–07')
+            headings=re.findall(r'^## (0[1-6]｜.+)$',source,re.M)
+            if [h[:2] for h in headings]!=[f'{i:02d}' for i in range(1,7)]:raise SystemExit('Template must contain 01–06')
             cases=read(run/'verified_cases.json')['cases']
             start=stamp(cfg['report_period_start']).astimezone(ZoneInfo(cfg['timezone']))
             last=stamp(cfg['report_period_end']).astimezone(ZoneInfo(cfg['timezone']))-timedelta(microseconds=1)
@@ -143,13 +143,17 @@ def main():
             for i,h in enumerate(headings,1):
                 parts.append('## '+h)
                 if i==1:parts.append(f'经核验情报 {len(cases)} 条（热门单视频 {sum(c["intelligence_type"]=="single_video" for c in cases)}；传播趋势 {sum(c["intelligence_type"]=="trend" for c in cases)}）。采集范围：{cfg["discovery_description"]}。覆盖率未知。视频发布时间不限，互动为采集时累计值；入选不代表本周新爆款，旧内容可能因累积时间更长而占优。')
-                elif i in (2,6):parts.extend([f'- [{c["entry_id"]}]({c["evidence_url"]})：{c["content_summary"]}' for c in cases] or ['暂无通过核验的条目。'])
+                elif i==2:parts.extend([f'- [{c["entry_id"]}]({c["evidence_url"]})：{c["content_summary"]}' for c in cases] or ['暂无通过核验的条目。'])
                 elif i==3:parts.extend([f'- {c["entry_id"]}：{c.get("form_observation") or "未获取"}' for c in cases] or ['未获取。'])
                 elif i==4:
                     for c in cases:
                         m=c['metric'];parts.extend(['### '+c['entry_id'],c['content_summary'],f'作者：{c["author"]}；发布时间：{c.get("published_at") or c.get("published_date") or (str(c.get("published_date_start"))+" 至 "+str(c.get("published_date_end")) if c.get("published_date_start") else source_records[c["record_id"]].get("published_at_raw") or "未知")}；情报类型：{c["intelligence_type"]}。',f'{m["name"]}：{m["value"] if m.get("value") is not None else str(m.get("display"))+"（约数/下限）"}，采集：{m["captured_at"]}；核验：{c["checked_at"]}。',f'表现依据：{c["performance_basis"]}',f'原视频：{c["evidence_url"]}'])
-                elif i==5:parts.append('缺少可比历史快照，跨周变化无法判断。')
-                elif i==7:parts.append('仅引用核验记录；单视频与趋势分别计数，不同平台指标不混合排名；未知信息不补数。')
+                elif i==5:
+                    escape=lambda value:str(value).replace('|','\\|').replace('\n',' ')
+                    table=['| 条目 | 作者 | 内容与原视频 | 情报类型 |','| --- | --- | --- | --- |']
+                    table.extend(f'| {c["entry_id"]} | {escape(c["author"])} | [{escape(c["content_summary"])}]({c["evidence_url"]}) | {c["intelligence_type"]} |' for c in cases)
+                    parts.append('\n'.join(table))
+                elif i==6:parts.append('仅引用核验记录；单视频与趋势分别计数，不同平台指标不混合排名；未知信息不补数。')
             text='\n\n'.join(parts)+'\n';n=1
             while (run/f'report_{n}.md').exists():n+=1
             (run/f'report_{n}.md').write_text(text,encoding='utf-8');(run/'report.md').write_text(text,encoding='utf-8')

@@ -85,8 +85,8 @@ def build(rows,review,editorial,start,end,generated_on,template):
     annotations=editorial.get('cases',{})
     known={r['platform']+':'+r['content_id'] for r in rows}
     if not set(annotations).issubset(known):raise ValueError('Unknown editorial case')
-    headings=re.findall(r'^## (0[1-7]｜.+)$',template,re.M)
-    if [h[:2] for h in headings]!=[f'{i:02d}' for i in range(1,8)]:raise ValueError('Template must contain sections 01–07')
+    headings=re.findall(r'^## (0[1-6]｜.+)$',template,re.M)
+    if [h[:2] for h in headings]!=[f'{i:02d}' for i in range(1,7)]:raise ValueError('Template must contain sections 01–06')
     cases=[]
     for i,row in enumerate(selected,1):
         video_key=row['platform']+':'+row['content_id'];annotation=annotations.get(video_key,{})
@@ -137,15 +137,13 @@ def build(rows,review,editorial,start,end,generated_on,template):
                       f'**样本表现依据：**{md("；".join(r.get("selection_reasons",[])))}。',
                       f'**来源：**{md(r.get("author_name","未知"))}｜[打开原视频]({c["url"]})｜发布时间：{md(r.get("published_at") or r.get("published_at_raw") or "未获取")}',
                       f'**复查：**{review_label(review_mark)}。标记时间 {review_mark.get("updated_at") or "未记录"}。'+(f'用户备注：{md(review_mark["note"])}。' if review_mark.get('note','').strip() else '')])
-    lines.extend(['## '+headings[4],'缺少另一周同一视频的可比快照，**本期无法判断升温、降温或持续增长**；目录日期和单次搜索结果不能代替跨周证据。',
-                  '可在后续同类样本中继续观察：便捷备餐、甜品烘焙的制作门槛表达、地方食物的地域与分量表达。这里只记录观察方向，不安排拍摄或投放任务。',
-                  '## '+headings[5],f'以下为用户保留的全部 {len(cases)} 条，共用同一套编号；重点案例是其中的子集。',
+    lines.extend(['## '+headings[4],f'以下为用户保留的全部 {len(cases)} 条，共用同一套编号；重点案例是其中的子集。',
                   '| 条目 | 平台 / 作者 | 内容 | 标签与互动快照 | 复查 |','| --- | --- | --- | --- | --- |'])
     for c in cases:
         r=c['record'];a=c['annotation'];title=a.get('short_title') or r['title'].split('#')[0].strip()
         if len(title)>55:title=title[:55]+'…'
         lines.append(f'| {c["entry_id"]} | {PLATFORMS[r["platform"]]} / {md(r.get("author_name","未知"))} | [{md(title)}]({c["url"]}) | {md(r.get("priority_label","未分类"))}；{metrics_text(r)} | {review_label(c["review"])} |')
-    lines.extend(['## '+headings[6],
+    lines.extend(['## '+headings[5],
                   '- 原始数据按平台保留；平台与字符串视频ID共同识别内容。筛选结果与复查JSON按数据快照匹配，未改写原数值。',
                   '- 本期正文是“复查后草稿”，不是verify产生的已核验案例。原视频内容核验与具体形式证据仍沿用DATA_FORMAT.md；不为通过脚本而编造checks.jsonl。',
                   '- 只把有两个及以上独立作者、可追溯独立来源且足以支持同一传播模式的材料认定为趋势；本期未作此认定。',

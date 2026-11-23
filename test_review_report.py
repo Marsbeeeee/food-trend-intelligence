@@ -14,7 +14,7 @@ class DraftReportTests(unittest.TestCase):
     def test_deterministic_and_unmodified(self):
         before=copy.deepcopy((self.rows,self.review));self.assertEqual(self.render(),self.render());self.assertEqual(before,(self.rows,self.review))
     def test_not_verified_and_precision_preserved(self):
-        text,payload=self.render();self.assertEqual(payload['status'],'review_backed_draft');self.assertIn('10万+',text);self.assertIn('已保留；未填写视频形式备注',text);self.assertNotIn('形式待补',text);self.assertNotIn('经核验情报 1',text);self.assertEqual(text.count('## 0'),7);self.assertNotIn('08｜',text);self.assertNotIn('发布前检查与归档',text)
+        text,payload=self.render();self.assertEqual(payload['status'],'review_backed_draft');self.assertIn('10万+',text);self.assertIn('已保留；未填写视频形式备注',text);self.assertNotIn('形式待补',text);self.assertNotIn('经核验情报 1',text);self.assertEqual(text.count('## 0'),6);self.assertNotIn('跨周观察与持续关注',text);self.assertIn('## 05｜完整内容明细',text);self.assertNotIn('08｜',text);self.assertNotIn('发布前检查与归档',text)
         self.assertNotIn('|\n\n|',text);self.assertIn('https://www.douyin.com/video/7616299354227698021',text)
     def test_snapshot_mismatch_rejected(self):
         self.rows[0]['metrics_display']['likes']='11万+';self.assertRaises(ValueError,validate,self.rows,self.review)

@@ -70,7 +70,7 @@ python collection.py audit --date 2026-12-05
 
 ### 复查后先生成Markdown草稿
 
-只有查看器导出的复查标记、尚未记录具体视频形式证据时，使用review-report，不要补造checks.jsonl。它保留用户“保留”的条目，核对数据快照与原ID，将编辑观察与数据合成01–07结构的“复查后草稿”；不重新筛选，不把标记保留算成完成内容核验。
+只有查看器导出的复查标记、尚未记录具体视频形式证据时，使用review-report，不要补造checks.jsonl。它保留用户“保留”的条目，核对数据快照与原ID，将编辑观察与数据合成01–06结构的“复查后草稿”；不重新筛选，不把标记保留算成完成内容核验。
 
 ```sh
 python run_pipeline.py review-report --candidates data/2026/1122/priority_36.jsonl --reviews data/2026/1122/priority_36_review.json --editorial data/2026/1122/report_editorial.json --period-start 2026-11-15 --period-end 2026-11-21 --generated-on 2026-11-22 --output-dir data/runs/2026-1115-1121-review-draft
@@ -117,3 +117,5 @@ python verify_reproducibility.py --input-root data/2026/1122 --config /local/fix
 ```
 
 四份test脚本分别检查数值精度、多指标选例、完整阶段链路、日期归档续采。verify_reproducibility.py会在临时目录执行两次离线流程并比较输出；fixed_config.json按config/weekly.json结构填写，observation_cutoff必须固定，确保比较基准一致。它生成的临时测试草稿不是正式周报。
+
+完整明细固定使用表格，归入第05节；Word/PDF导出时可单独使用横向页面，跨页重复表头，保留视频链接与全部字段。第06节为核验规则，不再生成跨周观察栏目。
