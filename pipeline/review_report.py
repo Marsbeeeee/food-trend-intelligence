@@ -85,8 +85,8 @@ def build(rows,review,editorial,start,end,generated_on,template):
     annotations=editorial.get('cases',{})
     known={r['platform']+':'+r['content_id'] for r in rows}
     if not set(annotations).issubset(known):raise ValueError('Unknown editorial case')
-    headings=re.findall(r'^## (0[1-8]｜.+)$',template,re.M)
-    if len(headings)!=8:raise ValueError('Template must contain sections 01–08')
+    headings=re.findall(r'^## (0[1-7]｜.+)$',template,re.M)
+    if [h[:2] for h in headings]!=[f'{i:02d}' for i in range(1,8)]:raise ValueError('Template must contain sections 01–07')
     cases=[]
     for i,row in enumerate(selected,1):
         video_key=row['platform']+':'+row['content_id'];annotation=annotations.get(video_key,{})
@@ -149,12 +149,7 @@ def build(rows,review,editorial,start,end,generated_on,template):
                   '- 原始数据按平台保留；平台与字符串视频ID共同识别内容。筛选结果与复查JSON按数据快照匹配，未改写原数值。',
                   '- 本期正文是“复查后草稿”，不是verify产生的已核验案例。原视频内容核验与具体形式证据仍沿用DATA_FORMAT.md；不为通过脚本而编造checks.jsonl。',
                   '- 只把有两个及以上独立作者、可追溯独立来源且足以支持同一传播模式的材料认定为趋势；本期未作此认定。',
-                  '- 采集时显示约数、下限与门槛并列均保留，不把“数据模糊”改成精确值。',
-                  '## '+headings[7],f'- [x] 使用确认周期 {start.isoformat()}—{end.isoformat()}，与归档日期和实际采集时间分开。',
-                  f'- [x] {len(cases)}条索引、平台数量、重点卡片编号相互一致；原始快照未修改。',
-                  '- [x] 报告以本地Markdown为主，不默认发布Google Docs或导出PDF。',
-                  '- [ ] 补充需要正式描述的视频形式证据，复查原链接及关键字段。',
-                  '- [ ] 人工审核结论、案例代表性与最终发布版本。'])
+                  '- 采集时显示约数、下限与门槛并列均保留，不把“数据模糊”改成精确值。'])
     payload={'schema_version':'review_report_v1','status':'review_backed_draft','report_id':report_id,'period_start':start.isoformat(),'period_end':end.isoformat(),'generated_on':generated_on,'selected_count':len(cases),'counts_by_platform':dict(platform_counts),'status_counts':dict(status_counts),'cases':cases}
     text='\n\n'.join(lines)+'\n'
     text=re.sub(r'(?<=\|)\n\n(?=\|)','\n',text)

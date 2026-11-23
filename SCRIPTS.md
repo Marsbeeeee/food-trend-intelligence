@@ -70,7 +70,7 @@ python collection.py audit --date 2026-12-05
 
 ### 复查后先生成Markdown草稿
 
-只有查看器导出的复查标记、尚未记录具体视频形式证据时，使用review-report，不要补造checks.jsonl。它保留用户“保留”的条目，核对数据快照与原ID，将编辑观察与数据合成01–08结构的“复查后草稿”；不重新筛选，不把标记保留算成完成内容核验。
+只有查看器导出的复查标记、尚未记录具体视频形式证据时，使用review-report，不要补造checks.jsonl。它保留用户“保留”的条目，核对数据快照与原ID，将编辑观察与数据合成01–07结构的“复查后草稿”；不重新筛选，不把标记保留算成完成内容核验。
 
 ```sh
 python run_pipeline.py review-report --candidates data/2026/1122/priority_36.jsonl --reviews data/2026/1122/priority_36_review.json --editorial data/2026/1122/report_editorial.json --period-start 2026-11-15 --period-end 2026-11-21 --generated-on 2026-11-22 --output-dir data/runs/2026-1115-1121-review-draft
