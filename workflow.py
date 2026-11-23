@@ -1,9 +1,10 @@
-"""Four explicit, resumable stages for MediaCrawler exports."""
-import argparse, hashlib, json, re, subprocess
+"""Four stages for browser-recorded video evidence; legacy exports remain readable."""
+import argparse, hashlib, json, re
 from pathlib import Path
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from pipeline.engine import normalize, food_relevance, canonical_url
+from pipeline.engine import normalize as normalize_legacy, food_relevance, canonical_url
+from pipeline.browser_records import normalize_browser
 from pipeline.priority import prioritize
 
 ROOT=Path(__file__).resolve().parent
@@ -25,8 +26,6 @@ def main():
     p.add_argument('--config',type=Path,default=ROOT/'config/weekly.json')
     p.add_argument('--input-root',type=Path)
     p.add_argument('--checks',type=Path)
-    p.add_argument('--collector-command',help='JSON argv array, no shell')
-    p.add_argument('--collector-cwd',type=Path)
     a=p.parse_args()
     if Path(a.run_id).name!=a.run_id or a.run_id in ('.','..'): p.error('Invalid run ID')
     run=a.run_root/a.run_id
@@ -40,13 +39,10 @@ def main():
         start,end,cutoff=[stamp(cfg[k]) for k in ('window_start','window_end','observation_cutoff')]
         if start>=end or cutoff<start: p.error('Invalid date window')
         if not cfg.get('keywords') or not cfg.get('discovery_description'): p.error('Record keywords and discovery_description')
-        if a.collector_command:
-            cmd=json.loads(a.collector_command)
-            if not isinstance(cmd,list) or not cmd or not all(isinstance(x,str) for x in cmd):p.error('Collector must be argv array')
-            subprocess.run(cmd,cwd=a.collector_cwd,check=True)
         if not a.input_root:p.error('--input-root required')
         inputs=[]
         for short,platform in [('xhs','xiaohongshu'),('dy','douyin'),('bili','bilibili')]:
+            if short not in cfg.get('platforms',['xhs','dy','bili']):continue
             found=sorted((a.input_root/short).rglob('*.jsonl'))
             if not found:p.error('Missing '+short+' exports; resolve collection first')
             inputs.extend((f,short,platform) for f in found)
@@ -63,7 +59,7 @@ def main():
         policy=read(ROOT/cfg.get('discovery_policy','config/discovery_policy.json'))
         write(run/'discovery_policy.json',policy)
         write(run/'config.json',cfg);save_rows(run/'raw_candidates.jsonl',raw)
-        write(run/'discovery.json',{'parsed':len(raw),'errors':errors,'collector_invoked':bool(a.collector_command)})
+        write(run/'discovery.json',{'parsed':len(raw),'errors':errors,'collection_method':cfg.get('collection_method','legacy_import')})
         if errors:raise SystemExit('Invalid input; see discovery.json and start corrected run')
         output=['config.json','discovery_policy.json','raw_candidates.jsonl','discovery.json']
     else:
@@ -73,7 +69,7 @@ def main():
             if sha(run/name)!=value:raise SystemExit('Upstream changed: '+name)
         if a.stage=='screen':
             if (run/'screen_manifest.json').exists():raise SystemExit('Already screened; start new run for changed rules')
-            normalized=[normalize(r,ZoneInfo(cfg['timezone'])) for r in rows(run/'raw_candidates.jsonl')]
+            normalized=[normalize_browser(r,ZoneInfo(cfg['timezone'])) if r['raw_record'].get('schema')=='browser_video_v1' else normalize_legacy(r,ZoneInfo(cfg['timezone'])) for r in rows(run/'raw_candidates.jsonl')]
             start,end,cutoff=[stamp(cfg[k]) for k in ('window_start','window_end','observation_cutoff')]
             seen=set();screened=[]
             for r in normalized:
