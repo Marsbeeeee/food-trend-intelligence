@@ -14,7 +14,7 @@ class DraftReportTests(unittest.TestCase):
     def test_deterministic_and_unmodified(self):
         before=copy.deepcopy((self.rows,self.review));self.assertEqual(self.render(),self.render());self.assertEqual(before,(self.rows,self.review))
     def test_not_verified_and_precision_preserved(self):
-        text,payload=self.render();self.assertEqual(payload['status'],'review_backed_draft');self.assertIn('10万+',text);self.assertIn('形式待补',text);self.assertNotIn('经核验情报 1',text);self.assertEqual(text.count('## 0'),8)
+        text,payload=self.render();self.assertEqual(payload['status'],'review_backed_draft');self.assertIn('10万+',text);self.assertIn('已保留；未填写视频形式备注',text);self.assertNotIn('形式待补',text);self.assertNotIn('经核验情报 1',text);self.assertEqual(text.count('## 0'),8)
         self.assertNotIn('|\n\n|',text);self.assertIn('https://www.douyin.com/video/7616299354227698021',text)
     def test_snapshot_mismatch_rejected(self):
         self.rows[0]['metrics_display']['likes']='11万+';self.assertRaises(ValueError,validate,self.rows,self.review)
@@ -26,5 +26,10 @@ class DraftReportTests(unittest.TestCase):
         self.editorial['cases']={'douyin:7616299354227698021':{'basis':'watched_video'}};self.assertRaises(ValueError,self.render)
     def test_douyin_identity_mismatch(self):
         self.rows[0]['content_id']='1234567890123456789';self.assertRaises(ValueError,link,self.rows[0])
+    def test_note_label_does_not_claim_form_verification(self):
+        self.review['reviews'][0]['note']='选题可以保留'
+        text,_=self.render();self.assertIn('已保留；已填写备注',text);self.assertNotIn('未填写视频形式备注',text)
+        self.review['reviews'][0]['note']='   '
+        self.assertIn('已保留；未填写视频形式备注',self.render()[0])
 
 if __name__=='__main__':unittest.main()

@@ -79,6 +79,7 @@ python run_pipeline.py review-report --candidates data/2026/1122/priority_36.jso
 period-end是包含当天的日期，与正式report的内部排他结束时间不同。目录已生成同名报告时会拒绝覆盖，换输出目录保存新版本。输出为美食视频周报_周期.md、report_input.json、report_manifest.json；正式归档时复制到对应日期目录，旧screen run与manifest保持原样。
 
 report_editorial.json由Codex根据现有标题/文案整理：cases按platform:ID填写category、可选short_title/summary/observation，basis必须为title_description；focus列出最多8个保留条目，themes与expressions每项含title、observation、sources。source_sample_count按实际原文件统计，archive_batch填写归档标签。脚本负责校验引用、保留互动精度、组装和计数；编辑观察仍须人工审核。不能把标题描述当作镜头证据，不把相似题材直接升格为传播趋势。
+草稿复查栏统一使用“已保留；未填写视频形式备注”（备注为空）或“已保留；已填写备注”（备注非空）。这表示导出记录是否有备注，不表示用户没看视频，也不强制要求补写；仅做选题与互动整理时可不补视频形式。填写普通备注不自动算作完成视频形式核验。
 
 ### 具备完整内容证据后生成正式核验版
 
