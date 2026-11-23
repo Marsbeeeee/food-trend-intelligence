@@ -36,7 +36,7 @@ discovery在这里是“检查并冻结采集文件”，不是重新采集。�
 - 优先“多项数据靠前”，再看“数据模糊”，剩余位置可由“一项数据靠前”补充；候补仍保留自身标签。相关性不确定的记录排在明确相关记录之后，必须先核验。
 - 同类别按命中指标数量、最突出指标的样本粗百分位、稳定record_id依次排序；record_id只用于同条件下确定性重放，不表示内容更优秀。不计算跨平台加权总分。
 - 每平台最多12条优先核验记录，共最多36条；同作者最多2条。作者优先按ID识别，缺ID时暂按名称分组，可能误合并同名作者，核验时确认。超过上限的亮点保留在候补，不删除源记录。
-- 同类选题、跨平台重复内容及借鉴价值留到原视频核验时判断。优先清单不是自动入选周报，最终目标约20–30条，按真实核验结果报告，不凑数。
+- 同类选题、跨平台重复内容及借鉴价值留到原视频核验时判断。优先清单不是自动完成核验；草稿按用户实际保留数量整理，正式版按真实核验结果报告，不设硬性条数，不凑数。
 
 ## 跑完看哪些文件
 
@@ -68,7 +68,21 @@ python collection.py status --date 2026-12-05 --show-ids
 python collection.py audit --date 2026-12-05
 ```
 
-看过原视频、填好符合[DATA_FORMAT.md](DATA_FORMAT.md)的checks.jsonl后，才进入后两阶段：
+### 复查后先生成Markdown草稿
+
+只有查看器导出的复查标记、尚未记录具体视频形式证据时，使用review-report，不要补造checks.jsonl。它保留用户“保留”的条目，核对数据快照与原ID，将编辑观察与数据合成01–08结构的“复查后草稿”；不重新筛选，不把标记保留算成完成内容核验。
+
+```sh
+python run_pipeline.py review-report --candidates data/2026/1122/priority_36.jsonl --reviews data/2026/1122/priority_36_review.json --editorial data/2026/1122/report_editorial.json --period-start 2026-11-15 --period-end 2026-11-21 --generated-on 2026-11-22 --output-dir data/runs/2026-1115-1121-review-draft
+```
+
+period-end是包含当天的日期，与正式report的内部排他结束时间不同。目录已生成同名报告时会拒绝覆盖，换输出目录保存新版本。输出为美食视频周报_周期.md、report_input.json、report_manifest.json；正式归档时复制到对应日期目录，旧screen run与manifest保持原样。
+
+report_editorial.json由Codex根据现有标题/文案整理：cases按platform:ID填写category、可选short_title/summary/observation，basis必须为title_description；focus列出最多8个保留条目，themes与expressions每项含title、observation、sources。source_sample_count按实际原文件统计，archive_batch填写归档标签。脚本负责校验引用、保留互动精度、组装和计数；编辑观察仍须人工审核。不能把标题描述当作镜头证据，不把相似题材直接升格为传播趋势。
+
+### 具备完整内容证据后生成正式核验版
+
+看过原视频、填好符合[DATA_FORMAT.md](DATA_FORMAT.md)的checks.jsonl后，才进入正式核验与报告：
 
 ```sh
 python run_pipeline.py verify --run-id 2026-1122-screen-v1 --checks /local/checks.jsonl
@@ -97,6 +111,7 @@ python test_metrics.py
 python test_priority.py
 python test_browser_records.py
 python test_collection.py
+python test_review_report.py
 python verify_reproducibility.py --input-root data/2026/1122 --config /local/fixed_config.json
 ```
 

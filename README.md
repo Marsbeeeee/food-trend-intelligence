@@ -14,6 +14,7 @@
 ## 使用
 
 脚本用途、清洗规则、运行命令和输出说明见[脚本使用说明](SCRIPTS.md)。
+查看器复查后可使用review-report生成明确标记的Markdown草稿；拥有完整内容证据后再走verify/report。两种输出都沿用现有母版，用户“保留”不会自动升级为完成内容核验。命令与编辑输入格式见SCRIPTS.md。
 人工复查可双击[本地候选查看器](viewer/index.html)：选择候选JSONL，按平台和标签浏览、打开原视频、标记并导出复查笔记；详细用法见SCRIPTS.md“用查看器复查候选”。无需安装或启动服务。
 Python3.11+；Windows如缺时区数据库安装tzdata。浏览器工具由Codex环境提供。先阅读[采集规则](COLLECTION_STANDARD.md)，再按[数据格式](DATA_FORMAT.md)保存本地记录。
 config/weekly.json设置本次出刊编号周期和运行基准；视频发布日期不限，未知日期也不阻塞采集。首次运行可自动冻结基准，复现测试须固定observation_cutoff。
