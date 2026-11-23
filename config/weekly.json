@@ -1,8 +1,8 @@
 {
-  "schema_version": "4.0",
+  "schema_version": "5.0",
   "timezone": "Asia/Shanghai",
   "observation_cutoff": null,
-  "filter_version": "4.0.0",
+  "filter_version": "5.0.0",
   "template": "视频热点情报周报_母版.md",
   "discovery_policy": "config/discovery_policy.json",
   "collection_method": "direct_browser",

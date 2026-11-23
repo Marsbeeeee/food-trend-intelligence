@@ -1,13 +1,18 @@
 """Adapt explicitly observed browser evidence. Never infer dates or missing metrics."""
 import hashlib, re
 from datetime import datetime
+from pipeline.metrics import observe_metrics, parse_display
 
 def approximate_display(value):
-    return isinstance(value,str) and re.fullmatch(r'\d+(?:\.\d+)?(?:万|亿|[kKmMwW])\+?|\d+\+',value.strip()) is not None
+    parsed=parse_display(value)
+    return parsed is not None and parsed['kind'] in ('approximate','lower_bound')
 
 def completeness_errors(raw, policy):
     """Return reasons only; rejected payloads must not enter a run."""
     r=raw['raw_record']; errors=[]
+    if not isinstance(r,dict):return ['not_object']
+    displays=r.get('metrics_display',{})
+    if not isinstance(displays,dict):return ['invalid_metrics_display']
     for k in ('content_id','url','source_url','title','author','captured_at'):
         if not isinstance(r.get(k),str) or not r[k].strip():errors.append('missing_'+k)
     for k in ('url','source_url'):
@@ -29,8 +34,10 @@ def completeness_errors(raw, policy):
     for k in ('views','likes','coins','favorites','shares','comments'):
         if k not in metrics:errors.append('missing_metric_key_'+k)
         v=metrics.get(k)
-        if (k in required and v is None and not approximate_display(r.get('metrics_display',{}).get(k))) or (v is not None and (type(v) is not int or v<0)):
+        if (k in required and v is None and not approximate_display(displays.get(k))) or (v is not None and (type(v) is not int or v<0)):
             errors.append('invalid_metric_'+k)
+    try:observe_metrics(metrics,displays)
+    except ValueError:errors.append('metric_precision_conflict')
     if r.get('keyword') not in policy['collection']['keywords']:errors.append('invalid_keyword')
     return errors
 def normalize_browser(raw,tz):
@@ -52,10 +59,11 @@ def normalize_browser(raw,tz):
     content_id=r["content_id"]
     return {"schema_version":"browser_video_v1","record_id":hashlib.sha256(f"{source['sha256']}:{source['line']}".encode()).hexdigest()[:20],
         "platform":raw["source_platform"],"content_id":content_id,"video_key":raw["source_platform"]+":"+content_id,
-        "url":r["url"],"title":r.get("title"),"description":r.get("description"),"author_id":r.get("author_id"),"author_name":r.get("author"),
+        "url":r["url"].strip(),"title":re.sub(r'\s+',' ',r.get("title") or '').strip(),"description":r.get("description"),"author_id":r.get("author_id"),"author_name":re.sub(r'\s+',' ',r.get("author") or '').strip().removeprefix('@').strip(),
         "content_type":r.get("content_type","unknown"),"published_at":timestamp(r.get("published_at")),"published_date":r.get('published_date'),"published_date_start":r.get('published_date_start'),"published_date_end":r.get('published_date_end'),
         "published_at_raw":r.get("published_at_display"),"published_at_status":"observed_exact" if r.get("published_at") else "date_only" if r.get('published_date') else "date_range" if r.get('published_date_start') else "unknown",
         "captured_at":timestamp(r["captured_at"]),"metrics":metrics,"metrics_display":r.get("metrics_display",{}),
+        "metric_observations":observe_metrics(metrics,r.get("metrics_display",{})),
         "source_keyword":r.get("keyword"),"source_ref":source,"field_provenance":{"method":"direct_browser","source_url":r["source_url"],"published_at_evidence":r.get("published_at_evidence")},
         "search_conditions":r.get('search_conditions',{}),"detail_status":r.get("detail_status","pending")}
 

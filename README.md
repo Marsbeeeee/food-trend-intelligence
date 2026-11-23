@@ -12,6 +12,8 @@
 |Reporting|检查结论和成稿|计算数量、按MD母版01–08栏目生成草稿|
 
 ## 使用
+
+脚本用途、清洗规则、运行命令和输出说明见[脚本使用说明](SCRIPTS.md)。
 Python3.11+；Windows如缺时区数据库安装tzdata。浏览器工具由Codex环境提供。先阅读[采集规则](COLLECTION_STANDARD.md)，再按[数据格式](DATA_FORMAT.md)保存本地记录。
 config/weekly.json设置本次出刊编号周期和运行基准；视频发布日期不限，未知日期也不阻塞采集。首次运行可自动冻结基准，复现测试须固定observation_cutoff。
 
@@ -41,14 +43,15 @@ python run_pipeline.py report --run-id 2026-1115-1121-test
 - run_pipeline.py：命令入口；workflow.py：四阶段脚本。
 - collection.py、pipeline/collection.py：日期归档、分批校验去重、进度与尝试上限；不控制浏览器。
 - docs/collection/：小红书、抖音、B站的实际采集操作说明。
-- pipeline/browser_records.py：浏览器记录适配；common.py：基础筛选函数；priority.py：互动优先级。
+- pipeline/browser_records.py：字段与精度校验；metrics.py：精确/约数/下限观测；common.py：相关性；priority.py：多指标候选与候补。
 - config/：周期和版本化参数；MD母版：报告栏目来源。
-- test_collection.py、test_browser_records.py、test_priority.py：离线行为测试。
+- test_collection.py、test_browser_records.py、test_priority.py、test_metrics.py：离线行为测试。
 - verify_reproducibility.py：给定相同浏览器记录和固定配置的两次复现检查。
 
 ```sh
 python test_browser_records.py
 python test_priority.py
+python test_metrics.py
 python test_collection.py
 python verify_reproducibility.py --input-root /local/records --config /local/fixed_config.json
 ```

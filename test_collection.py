@@ -150,6 +150,19 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(result['discard_reasons'], {'invalid_metrics_display': 1})
         self.assertEqual(self.job.path('dy').read_bytes(), b'')
 
+    def test_ranking_updates_do_not_reset_or_block_collection_resume(self):
+        self.attempt()
+        changed = deepcopy(POLICY)
+        changed['version'] = 'test-new-ranking'
+        changed['ranking']['max_candidates_per_platform'] = 3
+        resumed = Collection(self.root, self.job.date, changed)
+        resumed.init()
+        self.assertEqual(resumed.status()['platforms']['dy']['attempts'], 1)
+        self.assertEqual(resumed.load_state('dy')['policy'], POLICY)
+        changed['collection']['keywords'] = ['different']
+        with self.assertRaisesRegex(ValueError, 'frozen collection policy'):
+            Collection(self.root, self.job.date, changed).init()
+
 
 if __name__ == '__main__':
     unittest.main()

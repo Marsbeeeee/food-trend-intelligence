@@ -140,7 +140,7 @@ class Collection:
                 path = self.state_path(short)
                 if path.exists():
                     state = self.load_state(short)
-                    if state['policy'] != self.policy:
+                    if any(state['policy'][section] != self.policy[section] for section in ('collection', 'completeness')):
                         raise ValueError('This date has a frozen collection policy; resume with that policy rather than silently changing it')
                 else:
                     records = self.checked_rows(short, self.policy)
