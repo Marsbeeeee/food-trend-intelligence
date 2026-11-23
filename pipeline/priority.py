@@ -5,6 +5,8 @@ import math
 from pipeline.metrics import observe_metrics
 
 LABELS = {'views': '播放', 'likes': '点赞', 'favorites': '收藏', 'coins': '投币', 'shares': '分享', 'comments': '评论'}
+TIER_LABELS = {'multi_metric': '多项数据靠前', 'lower_bound_review': '数据模糊',
+               'single_metric_backup': '一项数据靠前', 'not_highlighted': '未进入前列'}
 
 
 def author_key(record):
@@ -85,10 +87,11 @@ def prioritize(records, policy):
             if hits:
                 reasons.append('样本主要指标前列：' + '、'.join(LABELS[n] for n in hits))
             if bounds:
-                reasons.append('下限值达到粗排门槛，需人工确认：' + '、'.join(LABELS[n] for n in bounds))
+                reasons.append('页面数值带“+”，具体数量不确定：' + '、'.join(LABELS[n] for n in bounds))
             if record['decision'] == 'review':
                 reasons.append('标题相关性不确定，核验后再选例')
             item = {**record, 'metric_observations': obs, 'priority_tier': tier,
+                    'priority_label': TIER_LABELS[tier],
                     'primary_hit_count': len(hits), 'primary_hits': hits,
                     'metric_evidence': evidence, 'review_flags': sorted(set(flags)),
                     'selection_reasons': reasons, 'author_key': key, 'author_identity_quality': quality,
@@ -128,4 +131,24 @@ def prioritize(records, policy):
     selected_ids = {item['record_id'] for item in selected}
     manual = [{**item, 'in_priority_queue': item['record_id'] in selected_ids} for item in manual]
     return {'selected': selected, 'reserve': reserve, 'needs_review': manual, 'summary': summary}
+
+
+def render_summary(priority, decisions, total):
+    """Readable labels share one mapping with JSONL exports; no selection changes."""
+    platforms = {'bilibili': 'B站', 'douyin': '抖音', 'xiaohongshu': '小红书'}
+    lines = ['# 清洗与候选筛选结果', '',
+             '本文件是待核验清单，不是正式周报；累计互动未按发布年龄、曝光量或账号规模校正。',
+             f'输入 {total} 条；明确排除 {decisions.get("exclude", 0)} 条；相关性待确认 {decisions.get("review", 0)} 条。', '',
+             '标签说明：多项数据靠前＝至少两项主要指标进入样本前20%；一项数据靠前＝单项突出，作为补充候选；数据模糊＝页面显示“10万+”等带“+”的数值，具体数量不确定，不是漏采字段。', '',
+             '| 平台 | 多项数据靠前 | 数据模糊 | 一项数据靠前 | 优先核验合计 | 候补 | 未触发亮点规则 |',
+             '| --- | ---: | ---: | ---: | ---: | ---: | ---: |']
+    for platform, stats in priority['summary']['platforms'].items():
+        tiers = stats['selected_tiers']
+        lines.append(f'| {platforms.get(platform, platform)} | {tiers.get("multi_metric", 0)} | {tiers.get("lower_bound_review", 0)} | {tiers.get("single_metric_backup", 0)} | {stats["selected"]} | {stats["reserve"]} | {stats["not_highlighted"]} |')
+    lines += ['', '## 优先核验条目', '']
+    for item in priority['selected']:
+        label = TIER_LABELS[item['priority_tier']]
+        lines.append(f'- {platforms.get(item["platform"], item["platform"])} / {item["selection_order"]} [{item["title"]}]({item["url"]}) — ' + '；'.join(item['selection_reasons']) + f'；标签：{label}。')
+    lines += ['', '指标约数只支持粗排；“数据模糊”的记录没有精确排名。评论仅作辅助。作者无ID时按名称暂分组，同名情况须核验。未进入优先清单不表示内容没有价值；完整数据与候补仍可追溯。']
+    return '\n'.join(lines) + '\n'
 

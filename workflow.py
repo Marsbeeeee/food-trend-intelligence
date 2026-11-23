@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from pipeline.common import food_relevance, canonical_url
 from pipeline.browser_records import normalize_browser, completeness_errors, approximate_display
-from pipeline.priority import prioritize
+from pipeline.priority import prioritize, render_summary
 from pipeline.collection import discover_inputs, record_errors
 
 ROOT=Path(__file__).resolve().parent
@@ -102,14 +102,8 @@ def main():
             save_rows(run/'reserve_candidates.jsonl',priority['reserve'])
             save_rows(run/'needs_review.jsonl',priority['needs_review'])
             write(run/'filter_summary.json',{'input':len(normalized),'decisions':{x:sum(r['decision']==x for r in screened) for x in ('keep','review','exclude')},'priority':priority['summary']})
-            lines=['# 清洗与候选筛选结果','','本文件是待核验清单，不是正式周报；累计互动未按发布年龄、曝光量或账号规模校正。',f'输入 {len(normalized)} 条；明确排除 {sum(r["decision"]=="exclude" for r in screened)} 条；相关性待确认 {sum(r["decision"]=="review" for r in screened)} 条。','','| 平台 | 优先核验 | 候补 | 未触发亮点规则 |','| --- | ---: | ---: | ---: |']
-            for platform,stats in priority['summary']['platforms'].items():
-                lines.append(f'| {platform} | {stats["selected"]} | {stats["reserve"]} | {stats["not_highlighted"]} |')
-            lines+=['','## 优先核验条目','']
-            for item in priority['selected']:
-                lines.append(f'- {item["platform"]} / {item["selection_order"]} [{item["title"]}]({item["url"]}) — '+ '；'.join(item['selection_reasons'])+f'；类别：{item["priority_tier"]}。')
-            lines+=['','指标约数只支持粗排；下限值没有精确排名。评论仅作辅助。作者无ID时按名称暂分组，同名情况须核验。未进入优先清单不表示内容没有价值；完整数据与候补仍可追溯。']
-            (run/'screen_summary.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+            decisions={x:sum(r['decision']==x for r in screened) for x in ('keep','review','exclude')}
+            (run/'screen_summary.md').write_text(render_summary(priority,decisions,len(normalized)),encoding='utf-8')
             output=['priority_queue.jsonl','reserve_candidates.jsonl','needs_review.jsonl','normalized_candidates.jsonl','screened_candidates.jsonl','excluded.jsonl','review_queue.jsonl','filter_summary.json','screen_summary.md']
         elif a.stage=='verify':
             candidates={r['record_id']:r for r in rows(run/'review_queue.jsonl')};checks=rows(a.checks) if a.checks else []
