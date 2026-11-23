@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),C=require('./core.js');
+const rows=C.parse(fs.readFileSync(process.argv[2]||'data/2026/1122/priority_36.jsonl','utf8'));
+assert.equal(rows.length,36);assert.equal(new Set(rows.map(C.key)).size,36);
+assert.deepEqual(Object.fromEntries(['bilibili','douyin','xiaohongshu'].map(p=>[p,rows.filter(r=>r.platform===p).length])),{bilibili:12,douyin:12,xiaohongshu:12});
+assert(rows.every(r=>C.safeURL(r)));const r=rows[0],id=C.identity(rows);
+assert.equal(id,C.identity([...rows].reverse()));assert.notEqual(id,C.identity(rows.map((r,i)=>i? r:{...r,captured_at:'another snapshot'})));
+assert.throws(()=>C.parse(JSON.stringify({...r,content_id:123})));assert.throws(()=>C.parse(JSON.stringify(r)+'\n'+JSON.stringify(r)));
+assert.throws(()=>C.parse('{broken'));assert.throws(()=>C.parse(''));
+assert.equal(C.safeURL({...r,url:'https://bilibili.com.evil.test/video'}),null);assert.equal(C.safeURL({...r,url:'javascript:alert(1)'}),null);
+assert.equal(C.safeURL({...r,url:'https://www.bilibili.com/video/test?xsec_token=a%2Bb&modal_id=123'}),'https://www.bilibili.com/video/test?xsec_token=a%2Bb&modal_id=123');
+const review={schema_version:'food_review_v1',dataset_id:id,reviews:[{video_key:C.key(r),status:'保留',note:'<script>安全显示为文本</script>',updated_at:'now'}]};
+assert.equal(C.validateReview(JSON.parse(JSON.stringify(review)),id,rows)[C.key(r)].status,'保留');
+assert.throws(()=>C.validateReview({...review,dataset_id:'wrong'},id,rows));assert.throws(()=>C.validateReview({...review,reviews:[...review.reviews,...review.reviews]},id,rows));
+assert.throws(()=>C.validateReview({...review,reviews:[{...review.reviews[0],status:'自动通过'}]},id,rows));
+console.log('Viewer checks passed: real 36 records, URLs, identity, invalid inputs and review export/import.');
