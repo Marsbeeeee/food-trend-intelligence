@@ -1,6 +1,6 @@
 'use strict';
 const C=FoodViewer, $=id=>document.getElementById(id), platformNames={douyin:'抖音',xiaohongshu:'小红书',bilibili:'B站'};
-let rows=[], reviews=Object.create(null), dataset='', filename='', current='', storageKey='';
+let rows=[], reviews=Object.create(null), dataset='', filename='', current='', storageKey='', pendingReview=null;
 const label=r=>C.labels[r.priority_tier]||r.priority_label||'未分类';
 const review=r=>reviews[C.key(r)]||{status:'未复查',note:''};
 function el(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
@@ -44,17 +44,27 @@ function render(){
  const details=el('details'),summary=el('summary','查看完整记录');details.append(summary,el('pre',JSON.stringify(r,null,2)));host.append(details);
 }
 $('open').onclick=()=>$('file').click();$('restore').onclick=()=>$('reviewfile').click();
+function importReview(document){
+ if(document?.schema_version!=='food_review_v1'||typeof document.dataset_id!=='string'||!Array.isArray(document.reviews))throw Error('请选择导出的 *_review.json 复查文件');
+ if(!rows.length){pendingReview=document;notice(`已读取 ${document.reviews.length} 条复查记录。请先打开对应候选文件 ${document.source_file||'候选 JSONL'}，随后会自动恢复标记和备注。`);return;}
+ const imported=C.validateReview(document,dataset,rows);reviews=imported;pendingReview=null;save();render();notice(`${filename} · 已恢复 ${Object.keys(imported).length} 条复查记录（标记和备注）。`);
+}
+$('restore').disabled=false;
 $('file').onchange=async e=>{
  const file=e.target.files[0];e.target.value='';if(!file)return;
  try{
   if(file.size>20*1024*1024)throw Error('文件超过20MB，请先拆分候选文件');
-  const parsed=C.parse(await file.text()), id=C.identity(parsed);
+  const text=(await file.text()).replace(/^\uFEFF/,'');
+  let possibleReview;try{possibleReview=JSON.parse(text);}catch{}
+  if(possibleReview?.schema_version==='food_review_v1'){importReview(possibleReview);return;}
+  const parsed=C.parse(text), id=C.identity(parsed);
   rows=parsed;dataset=id;filename=file.name;storageKey='food-review-v1:'+dataset;reviews=Object.create(null);current='';
   let saved;try{saved=localStorage.getItem(storageKey);}catch{}
   if(saved){try{reviews=C.validateReview(JSON.parse(saved),dataset,rows);}catch{notice('旧暂存无效，已忽略；可导入之前导出的复查文件。',true);}}
   for(const name of ['platform','tier','status','search'])$(name).value='';$('export').disabled=false;$('restore').disabled=false;render();notice(`${filename} · 共 ${rows.length} 条。复查记录仅暂存在当前浏览器，离开前请导出备份。`);
+  if(pendingReview){try{importReview(pendingReview);}catch(err){notice(`${err.message}。复查文件仍保留待恢复，请打开与它对应的候选 JSONL。`,true);}}
  }catch(err){notice(err.message,true);}
 };
 for(const id of ['platform','tier','status'])$(id).onchange=render;$('search').oninput=render;
 $('export').onclick=()=>{const blob=new Blob([JSON.stringify(doc(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=filename.replace(/\.[^.]+$/,'')+'_review.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-$('reviewfile').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>30*1024*1024)throw Error('复查文件过大');const imported=C.validateReview(JSON.parse(await file.text()),dataset,rows);reviews=imported;save();render();}catch(err){notice(err.message,true);}};
+$('reviewfile').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{if(file.size>30*1024*1024)throw Error('复查文件过大');importReview(JSON.parse((await file.text()).replace(/^\uFEFF/,'')));}catch(err){notice(err.message,true);}};

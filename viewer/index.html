@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>美食候选 · 复查台</title>
 <link rel="stylesheet" href="styles.css"></head><body><main>
 <div class="masthead"><span class="brand-square" aria-hidden="true"></span>FOOD NOTES / 内容复查</div><header class="top"><div><h1>留下值得借鉴的内容。</h1><p>看原视频，做判断，记下一个好点子。</p></div>
-<div class="actions"><button id="open" class="primary">打开候选 JSONL</button><button id="export" disabled>导出复查记录</button><button id="restore" disabled>导入记录</button></div></header>
+<div class="actions"><button id="open" class="primary">打开候选 JSONL</button><button id="export" disabled>导出复查记录</button><button id="restore">导入复查记录</button></div></header>
 <input id="file" class="file-input" type="file" accept=".jsonl,.json"><input id="reviewfile" class="file-input" type="file" accept=".json">
 <div class="workspace-bar"><div class="workspace-title"><span>01</span>候选复查台</div><div id="progress" role="status">打开一批候选，开始复查</div></div><div id="notice" role="status">选择 priority_36.jsonl 或下一批候选文件。文件只在当前浏览器中读取。</div>
 <div class="filters"><label>平台 <select id="platform"><option value="">全部平台</option><option value="bilibili">B站</option><option value="douyin">抖音</option><option value="xiaohongshu">小红书</option></select></label><label>入选标签 <select id="tier"><option value="">全部标签</option><option>多项数据靠前</option><option>数据模糊</option><option>一项数据靠前</option><option>未分类</option></select></label><label>复查状态 <select id="status"><option value="">全部状态</option><option>未复查</option><option>保留</option><option>淘汰</option><option>待确认</option></select></label><label>查找内容 <input id="search" type="search" placeholder="搜索标题、作者或 ID"></label></div>
