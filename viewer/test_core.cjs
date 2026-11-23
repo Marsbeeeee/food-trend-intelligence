@@ -3,6 +3,16 @@ const rows=C.parse(fs.readFileSync(process.argv[2]||'data/2026/1122/priority_36.
 assert.equal(rows.length,36);assert.equal(new Set(rows.map(C.key)).size,36);
 assert.deepEqual(Object.fromEntries(['bilibili','douyin','xiaohongshu'].map(p=>[p,rows.filter(r=>r.platform===p).length])),{bilibili:12,douyin:12,xiaohongshu:12});
 assert(rows.every(r=>C.safeURL(r)));const r=rows[0],id=C.identity(rows);
+for(const dy of rows.filter(r=>r.platform==='douyin'))assert.equal(C.safeURL(dy),'https://www.douyin.com/video/'+dy.content_id);
+const dy={platform:'douyin',content_id:'7616299354227698021',url:'https://www.douyin.com/video/7531793800897826063/search/test?modal_id=7616299354227698021&type=general'};
+assert.equal(C.safeURL(dy),'https://www.douyin.com/video/7616299354227698021');
+assert.equal(C.safeURL({...dy,url:'https://www.douyin.com/search/test?modal_id=7531793800897826063'}),null);
+assert.equal(C.safeURL({...dy,url:'https://www.douyin.com/search/test'}),null);
+assert.equal(C.safeURL({...dy,url:'https://douyin.com.evil.test/?modal_id=7616299354227698021'}),null);
+assert.equal(C.safeURL({...dy,content_id:7616299354227698021}),null);
+const raw=JSON.parse(JSON.stringify(dy));C.safeURL(dy);assert.deepEqual(dy,raw);
+const allDY=fs.readFileSync(require('node:path').join(require('node:path').dirname(process.argv[2]||'data/2026/1122/priority_36.jsonl'),'douyin_original.jsonl'),'utf8').trim().split(/\r?\n/).map(line=>({...JSON.parse(line),platform:'douyin'}));
+assert.equal(allDY.length,60);assert(allDY.every(r=>C.safeURL(r)==='https://www.douyin.com/video/'+r.content_id));
 assert.equal(id,C.identity([...rows].reverse()));assert.notEqual(id,C.identity(rows.map((r,i)=>i? r:{...r,captured_at:'another snapshot'})));
 assert.throws(()=>C.parse(JSON.stringify({...r,content_id:123})));assert.throws(()=>C.parse(JSON.stringify(r)+'\n'+JSON.stringify(r)));
 assert.throws(()=>C.parse('{broken'));assert.throws(()=>C.parse(''));

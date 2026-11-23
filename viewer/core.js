@@ -22,7 +22,16 @@
   function safeURL(r) {
     try {
       const u=new URL(r.url); const domains={douyin:['douyin.com'],xiaohongshu:['xiaohongshu.com','xhslink.com'],bilibili:['bilibili.com','b23.tv']}[r.platform]||[];
-      return u.protocol==='https:' && !u.username && !u.password && domains.some(d=>u.hostname===d||u.hostname.endsWith('.'+d)) ? u.href : null;
+      if (u.protocol!=='https:' || u.username || u.password || !domains.some(d=>u.hostname===d||u.hostname.endsWith('.'+d))) return null;
+      if (r.platform==='douyin') {
+        // Search modal URLs can contain a stale /video/ID prefix. The modal ID wins.
+        const modal=u.searchParams.get('modal_id');
+        const direct=u.pathname.match(/^\/video\/(\d+)\/?$/);
+        const id=modal!==null?modal:direct?.[1];
+        if (typeof r.content_id!=='string'||!/^\d{10,25}$/.test(r.content_id)||id!==r.content_id) return null;
+        return 'https://www.douyin.com/video/'+r.content_id;
+      }
+      return u.href;
     } catch {return null;}
   }
   function validateReview(doc,dataset,rows) {
