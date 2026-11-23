@@ -79,5 +79,5 @@ def normalize_browser(raw,tz):
         "published_at_raw":r.get("published_at_display"),"published_at_status":"observed_exact" if r.get("published_at") else "date_only" if r.get('published_date') else "date_range" if r.get('published_date_start') else "unknown",
         "captured_at":timestamp(r["captured_at"]),"metrics":metrics,"metrics_display":r.get("metrics_display",{}),
         "source_keyword":r.get("keyword"),"source_ref":source,"field_provenance":{"method":"direct_browser","source_url":r["source_url"],"published_at_evidence":r.get("published_at_evidence")},
-        "detail_status":r.get("detail_status","pending")}
+        "search_conditions":r.get('search_conditions',{}),"detail_status":r.get("detail_status","pending")}
 
