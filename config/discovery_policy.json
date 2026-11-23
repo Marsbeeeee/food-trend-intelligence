@@ -1,5 +1,5 @@
 {
-  "version": "1.2",
+  "version": "2.0",
   "purpose": "爆款候选发现，非爆款认证",
   "collection": {
     "keywords": [
@@ -24,8 +24,9 @@
     "platform_routes": {
       "douyin": "ONE_WEEK + MOST_LIKE; exact timestamps checked locally; rolling platform boundary may differ slightly",
       "bilibili": "MOST_CLICK with explicit epoch bounds derived from shared anchor",
-      "xiaohongshu": "LATEST + VIDEO; local date checks; not a guaranteed heat ranking"
-    }
+      "xiaohongshu": "美食频道，打开详情记录；不保证同期热榜"
+    },
+    "method": "direct_browser"
   },
   "ranking": {
     "min_cohort": 10,
