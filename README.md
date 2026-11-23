@@ -35,7 +35,7 @@ python run_pipeline.py verify --run-id 2026-1115-1121-test --checks /local/check
 python run_pipeline.py report --run-id 2026-1115-1121-test
 ```
 
-每次只执行用户指定阶段。结果在data/runs/<run-id>/，仅保留完整源记录与筛选理由。Discovery和screen不覆盖；补核验后可重跑verify/report并保留版本。用户要求归档并同步仓库时，只提交对应日期的三份公开视频原始JSONL；collection_state、runs、临时批次、Cookie、登录令牌和浏览器会话始终留本地。只要求本地试跑时不自动上传。
+每次只执行用户指定阶段。结果在data/runs/<run-id>/，仅保留完整源记录与筛选理由。Discovery和screen不覆盖；补核验后可重跑verify/report并保留版本。用户要求归档并同步仓库时，提交对应日期的三份公开视频原始JSONL，以及用户明确指定归档的筛选结果；collection_state、runs、临时批次、Cookie、登录令牌和浏览器会话始终留本地。只要求本地试跑时不自动上传。
 周报编号为2026-1115-1121，条目追加-001；视频身份为平台:原ID。滚动时间在正文精确注明。没有跨日期候选池，修改筛选来源/配置需新run；采集续采进度与Pipeline的run分开管理。
 
 ## 文件

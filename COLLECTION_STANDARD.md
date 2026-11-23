@@ -17,7 +17,7 @@
 3. 批量检查卡片，跳过明确图文、无关内容和同日已保存ID。打开每条详情前运行`python collection.py attempt --date 2026-12-05 --platform dy --keyword 美食 --key "实际卡片URL或关键词/作者/标题"`。只有返回open_detail: true才打开。刻意重试同一卡片须加--retry，仍计入上限。命令只是记账，不会自行打开网页。
 4. 用当前环境的浏览器工具核实视频、完整链接、标题、作者、采集时间和必需互动指标。按配置的批次大小，将完整browser_video_v1记录写到临时JSON数组或JSONL文件，运行`python collection.py append --date 2026-12-05 --platform dy --batch /local/batch.json`。批次通过已有文件工具保存；不要临时借助用户正在使用的编辑器、剪贴板或窗口搬运数据。
 5. 详情失败且未交给append时，运行`python collection.py reject --date 2026-12-05 --platform dy --reason detail_timeout`等简短原因码。不要保存不完整详情；append自己丢弃的坏记录不再重复reject。每批后看返回的实际新增数，不把读取数当落盘数。
-6. `python collection.py audit --date 2026-12-05`核对条数、关键词分布和实际排序；完成用户指定阶段后停止。用户要求同步仓库时，提交本次日期目录的三份原始JSONL；其它运行数据仍留本地。
+6. `python collection.py audit --date 2026-12-05`核对条数、关键词分布和实际排序；完成用户指定阶段后停止。用户要求同步仓库时，提交本次日期目录的三份原始JSONL及用户明确指定归档的筛选结果；其它运行数据仍留本地。
 
 同日按平台+原视频ID去重，保留第一次完整观测；重放同一批不改已存数值。跨日期允许同一视频再次出现，分别保存当时快照，不跨日期删除或合并。同日想重新测量已存视频，应先明确另存快照方案，不能覆盖_original文件。
 
