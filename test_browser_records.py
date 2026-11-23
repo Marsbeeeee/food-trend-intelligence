@@ -17,12 +17,13 @@ with tempfile.TemporaryDirectory() as temp:
     except ValueError:pass
     unknown={**record,'content_id':'unknown-date','published_at':None,'published_at_display':'编辑于2天前'}
     (inputs/'records.jsonl').write_text('\n'.join(json.dumps(x) for x in [record,unknown])+'\n',encoding='utf-8')
-    cfg=json.loads((ROOT/'config/fixture.json').read_text(encoding='utf-8'))
-    cfg.update(timezone='Asia/Shanghai',platforms=['xhs'],collection_method='direct_browser',window_start='2026-11-15T20:00:00+08:00',window_end='2026-11-22T20:00:00+08:00',observation_cutoff='2026-11-22T20:00:00+08:00')
+    cfg=json.loads((ROOT/'config/weekly.json').read_text(encoding='utf-8'))
+    cfg.update(window_mode='fixed',timezone='Asia/Shanghai',platforms=['xhs'],collection_method='direct_browser',window_start='2026-11-15T20:00:00+08:00',window_end='2026-11-22T20:00:00+08:00',observation_cutoff='2026-11-22T20:00:00+08:00')
     config=base/'config.json';config.write_text(json.dumps(cfg),encoding='utf-8')
     for stage in ('discovery','screen','verify','report'):
         subprocess.run([sys.executable,str(ROOT/'run_pipeline.py'),stage,'--run-id','test','--run-root',str(base/'runs'),'--config',str(config),'--input-root',str(base/'input')],check=True,capture_output=True)
     result=[json.loads(x) for x in (base/'runs/test/screened_candidates.jsonl').read_text(encoding='utf-8').splitlines()]
     assert [x['decision'] for x in result]==['keep','pending']
     assert (base/'runs/test/report.md').exists()
+    subprocess.run([sys.executable,str(ROOT/'verify_reproducibility.py'),'--input-root',str(base/'input'),'--config',str(config)],check=True,capture_output=True)
 print('Browser records: complete URL/string ID preserved, missing and approximate metrics checked, uncertain date pending, four stages passed')

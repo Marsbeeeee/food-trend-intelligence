@@ -1,9 +1,9 @@
-"""Four stages for browser-recorded video evidence; legacy exports remain readable."""
+"""Four stages: direct browser evidence, Python screening, verification, Markdown."""
 import argparse, hashlib, json, re
 from pathlib import Path
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from pipeline.engine import normalize as normalize_legacy, food_relevance, canonical_url
+from pipeline.common import food_relevance, canonical_url
 from pipeline.browser_records import normalize_browser
 from pipeline.priority import prioritize
 
@@ -69,7 +69,7 @@ def main():
             if sha(run/name)!=value:raise SystemExit('Upstream changed: '+name)
         if a.stage=='screen':
             if (run/'screen_manifest.json').exists():raise SystemExit('Already screened; start new run for changed rules')
-            normalized=[normalize_browser(r,ZoneInfo(cfg['timezone'])) if r['raw_record'].get('schema')=='browser_video_v1' else normalize_legacy(r,ZoneInfo(cfg['timezone'])) for r in rows(run/'raw_candidates.jsonl')]
+            normalized=[normalize_browser(r,ZoneInfo(cfg['timezone'])) for r in rows(run/'raw_candidates.jsonl')]
             start,end,cutoff=[stamp(cfg[k]) for k in ('window_start','window_end','observation_cutoff')]
             seen=set();screened=[]
             for r in normalized:

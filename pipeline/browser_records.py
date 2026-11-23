@@ -3,6 +3,7 @@ import hashlib
 from datetime import datetime
 def normalize_browser(raw,tz):
     r=raw["raw_record"];source=raw["source_ref"]
+    if r.get("schema")!="browser_video_v1":raise ValueError("Expected browser_video_v1 record")
     for field in ("content_id","url","captured_at","source_url"):
         if not isinstance(r.get(field),str) or not r[field]:raise ValueError("Missing browser field: "+field)
     if not r["url"].startswith("https://"):raise ValueError("Complete HTTPS source link required")
