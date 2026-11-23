@@ -10,7 +10,8 @@
 |content_id|原视频ID字符串|
 |url|实际打开成功的完整HTTPS详情链接，保留必要访问参数|
 |source_url|实际发现入口的完整HTTPS链接|
-|keyword|抖音/B站为配置关键词；小红书频道为null|
+|keyword|三个平台均填写实际使用的配置关键词；source_url保存实际搜索结果页|
+|search_conditions|实际使用的类型、日期筛选、排序原文；不可用选项注明unsupported，不假设启用|
 |title、author|非空页面标题、作者名|
 |author_id|可选字符串，不能确认则null|
 |content_type|video，须实际确认|

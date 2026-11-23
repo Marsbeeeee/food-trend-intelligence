@@ -53,7 +53,7 @@ def completeness_errors(raw, policy):
         v=metrics.get(k)
         if (k in required and v is None and not approximate_display(r.get('metrics_display',{}).get(k))) or (v is not None and (type(v) is not int or v<0)):
             errors.append('invalid_metric_'+k)
-    if raw['source_platform']!='xiaohongshu' and r.get('keyword') not in policy['collection']['keywords']:errors.append('invalid_keyword')
+    if r.get('keyword') not in policy['collection']['keywords']:errors.append('invalid_keyword')
     return errors
 def normalize_browser(raw,tz):
     r=raw["raw_record"];source=raw["source_ref"]

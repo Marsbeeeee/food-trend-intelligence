@@ -16,10 +16,11 @@ with tempfile.TemporaryDirectory() as temp:
         normalize_browser({**source,'raw_record':{**record,'metrics':{'likes':'1万'}}},ZoneInfo('Asia/Shanghai'))
         raise AssertionError('Approximate metric accepted as exact')
     except ValueError:pass
-    record.update(author='测试作者',published_at_evidence='原页首次发布时间',detail_status='complete',metrics={'views':None,'likes':50,'coins':None,'favorites':20,'comments':0,'shares':None})
+    record.update(keyword='美食',author='测试作者',published_at_evidence='原页首次发布时间',detail_status='complete',metrics={'views':None,'likes':50,'coins':None,'favorites':20,'comments':0,'shares':None})
     policy=json.loads((ROOT/'config/discovery_policy.json').read_text(encoding='utf-8'))
     source['raw_record']=record
     assert not completeness_errors(source,policy)
+    assert 'invalid_keyword' in completeness_errors({**source,'raw_record':{**record,'keyword':None}},policy)
     rounded={**record,'content_id':'rounded-date','published_at':None,'published_date':'2026-11-19','metrics':{**record['metrics'],'likes':None},'metrics_display':{'likes':'1.2万'}}
     assert not completeness_errors({**source,'raw_record':rounded},policy)
     tz=ZoneInfo('Asia/Shanghai')

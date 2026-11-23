@@ -1,5 +1,5 @@
 {
-  "version": "3.1",
+  "version": "3.2",
   "purpose": "爆款候选发现，非爆款认证",
   "collection": {
     "keywords": [
@@ -20,13 +20,13 @@
     "platform_routes": {
       "douyin": "ONE_WEEK + MOST_LIKE; exact timestamps checked locally; rolling platform boundary may differ slightly",
       "bilibili": "MOST_CLICK with explicit epoch bounds derived from shared anchor",
-      "xiaohongshu": "美食频道，打开详情记录；不保证同期热榜"
+      "xiaohongshu": "关键词搜索；优先实际可用的视频类型、最近一周、最多点赞选项；记录实际筛选状态，缺失选项不声称已启用；Python复核日期"
     },
     "method": "direct_browser",
     "target_complete_per_platform": 60,
     "target_per_keyword": 20,
     "max_detail_attempts_per_platform": 120,
-    "quota_rule": "Count unique complete records only; per-keyword shortfalls may use other configured keywords, never exceed platform target; xhs food channel has no keyword quota."
+    "quota_rule": "All three platforms use configured keywords, target 20 per keyword and 60 unique complete records per platform; shortfalls may use other configured keywords, never exceed platform target."
   },
   "ranking": {
     "min_cohort": 10,
