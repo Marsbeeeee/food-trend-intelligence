@@ -1,0 +1,19 @@
+{
+  "schema_version": "5.0",
+  "timezone": "Asia/Shanghai",
+  "observation_cutoff": null,
+  "filter_version": "5.0.0",
+  "template": "templates/weekly_report.md",
+  "collection_method": "direct_browser",
+  "platforms": [
+    "xhs",
+    "dy",
+    "bili"
+  ],
+  "publication_scope": "all_time",
+  "report_period_start": null,
+  "report_period_end": null,
+  "collection_policy": "config/legacy/collection.json",
+  "screening_policy": "config/legacy/screening.json"
+}
+

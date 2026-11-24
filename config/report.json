@@ -1,18 +1,9 @@
 {
-  "schema_version": "5.0",
-  "timezone": "Asia/Shanghai",
-  "observation_cutoff": null,
-  "filter_version": "5.0.0",
-  "template": "templates/weekly_report.md",
-  "collection_method": "direct_browser",
-  "platforms": [
-    "xhs",
-    "dy",
-    "bili"
-  ],
-  "publication_scope": "all_time",
-  "report_period_start": null,
-  "report_period_end": null,
-  "collection_policy": "config/collection.json",
-  "screening_policy": "config/screening.json"
+  "schema": "benchmark_report_v1",
+  "account_template": "templates/account_report.md",
+  "comparison_template": "templates/account_comparison.md",
+  "output": "markdown",
+  "marketing_scope": "evidence_and_observations_with_limited_suggestions",
+  "automatic_schedule": false
 }
+

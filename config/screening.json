@@ -1,35 +1,31 @@
 {
-  "ranking": {
-    "min_cohort": 10,
-    "top_fraction": 0.2,
-    "min_primary_hits": 2,
-    "max_candidates_per_platform": 12,
-    "max_per_author": 2,
-    "fill_with_single_metric_backups": true,
-    "platform_metrics": {
-      "douyin": [
-        "likes",
-        "favorites",
-        "shares"
-      ],
-      "xiaohongshu": [
-        "likes",
-        "favorites"
-      ],
-      "bilibili": [
-        "views",
-        "likes",
-        "favorites",
-        "coins",
-        "shares"
-      ]
-    },
-    "supplemental_metrics": [
-      "comments"
+  "schema": "benchmark_review_v1",
+  "selection": "human_review",
+  "decisions": [
+    "pending",
+    "selected",
+    "reserve",
+    "rejected"
+  ],
+  "fit_categories": [
+    "direct",
+    "adjacent",
+    "unverified"
+  ],
+  "automatic_ranking": false,
+  "exclude_for_low_recent_views": false,
+  "comparison": {
+    "group_by": [
+      "account_id",
+      "platform",
+      "format"
     ],
-    "absolute_thresholds": null,
-    "cross_platform_score": false,
-    "group_by": "platform",
-    "comparison_basis": "cumulative_display_values; approximate coarse ordering; lower bounds require review"
+    "metric": "views",
+    "baseline": "median_of_explicit_baseline_sample",
+    "minimum_numeric_sample": 10,
+    "content_groups": "human_assigned_ordinary_or_high",
+    "fallback_metric": null,
+    "cross_platform_score": false
   }
 }
+

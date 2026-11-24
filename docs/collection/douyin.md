@@ -1,3 +1,5 @@
+> 历史平台记录：不用于当前采集。当前平台和执行规则见 [采集说明](../collection.md)。
+
 # 抖音采集操作
 
 配额、记录命令和停止条件遵循[采集标准](../collection.md)；本文件只记录页面操作经验。
@@ -13,3 +15,4 @@
 上次可用定位线索：卡片标题.hu36PKCP；活动播放器.modalPlayer.xgplayer-playing；data-e2e里的video-desc、feed-video-nickname、video-player-digg、feed-comment-icon、video-player-collect、video-player-share。它们不是平台接口承诺，每次必须从当前页面确认再用。先等字段就绪，再读取，不能靠固定延时假定成功。
 
 标签“收藏/评论/分享”不是数值0；先去除数值前后空白，约数按docs/data_format.md保留。每批交给`python run.py collect append`确认落盘；不要在浏览器内重写去重或数值转换规则。截图和完整长页面只在需要定位/登录时获取，常规检查用目标字段，减少无关输出。
+

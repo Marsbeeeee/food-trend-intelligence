@@ -1,11 +1,14 @@
 # 仓库维护规则
 
-以最新确认的用户流程为准。新规则直接替换旧规则，同一规则只保留一个权威来源；确认无调用后删除失效入口与重复文档。不要删除用户数据、母版或无关文件。
+以最新确认的用户流程为准：Instagram、TikTok、YouTube 先找“硬汉形象或人设＋持续做面包”的对标账号；不设粉丝或播放门槛，人工选几个后再分析其日常与高流量视频。默认停在候选清单，不自动进入视频阶段。
 
-统一入口为run.py。业务程序在pipeline/，测试在tests/，母版在templates/。采集关键词、数量与完整性维护在config/collection.json；筛选参数在config/screening.json；出刊编号与运行基准在config/report.json。三个平台的视频发布时间均不限。
+当前统一入口为 run.py；账号与视频阶段在 pipeline/benchmarks.py，现有 export 可继续使用。当前配置唯一来源为 config/collection.json、screening.json、report.json，参数不得在文档或执行指引中另设相互冲突的规则。config/legacy/ 仅供旧模块的历史回归测试，不能作为当前默认采集规则。退役命令不恢复为 run.py 可执行入口。
 
-字段格式见docs/data_format.md；采集执行见docs/collection.md与docs/collection/；命令见docs/usage.md；职责见docs/workflow.md。Skill只协调现有程序，不临时重写筛选逻辑。
+字段见 docs/data_format.md，采集见 docs/collection.md，命令见 docs/usage.md，职责见 docs/workflow.md。账号身份按平台保存；跨平台同一人物必须记录依据。搜索结果未核实的账号标为待确认，不能当成已核实入选账号。
 
-整个data/目录只留本地，被Git忽略；不提交原数据、筛选结果、复查记录、成稿、collection_state或runs。已跟踪的数据从当前分支取消跟踪时保留本地现状，不恢复用户已删除的文件，不清空目录，不重写历史。viewer目录与data日期结构保持原样。
+整个 data/ 仅留本地，被 Git 忽略，不提交原始观察、复查、成稿和运行快照。不得删除用户数据、母版或无关文件；不重写旧 manifest，不改用户已完成的选择。viewer 结构保持原样，仍可打开旧候选文件；不要将新账号数据送入旧查看器。
 
-历史运行配置与manifest不能因整理目录被改写。只读解析历史引用是为了继续打开已有run，不保留旧的可执行入口。规则变化使用新run。提交前更新调用、测试和文档链接，运行受影响的离线测试，并用固定样本确认内容ID、筛选结果、标签及互动值一致。Word/PDF导出须检查实际渲染；没有PDF环境时如实说明，不能宣称完成转换。
+规则变化使用新归档或报告版本；已初始化的配置快照保持冻结。报告保存完整输入快照和校验和。修改程序后运行相关离线测试，并验证跨平台身份、缺失指标、阶段边界、样本分组和防覆盖行为。原有合成样本回归测试用于确认旧记录仍可解释，不代表旧采集流程仍启用。
+
+Word/PDF 导出必须检查实际渲染，没有转换环境不能声称完成。Cookie、令牌、API Key、会话及运行缓存不提交。
+

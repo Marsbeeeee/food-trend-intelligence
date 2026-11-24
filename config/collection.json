@@ -1,57 +1,37 @@
 {
-  "version": "5.0",
-  "purpose": "爆款候选发现，非爆款认证",
-  "collection": {
-    "keywords": [
-      "美食",
-      "烘焙",
-      "美食制作"
-    ],
-    "preferred_route": "平台实际支持的热度/点赞/播放排序；综合排序须注明不能视为热榜",
-    "supplement_route": "不默认新增入口，需按实际平台方案记录",
-    "record_actual_conditions": true,
-    "schedule": {
-      "timezone": "Asia/Shanghai",
-      "preferred_day": "Sunday evening (manual preference only)",
-      "automatic_schedule": false
-    },
-    "platform_routes": {
-      "douyin": "关键词搜索＋最多点赞（实际可用时）；不设发布时间筛选",
-      "bilibili": "关键词搜索＋最多播放；不设发布时间筛选",
-      "xiaohongshu": "关键词搜索＋视频类型，优先最多点赞（实际可用时）；不设发布时间筛选，综合排序如实注明"
-    },
-    "method": "direct_browser",
-    "target_complete_per_platform": 60,
-    "target_per_keyword": 20,
-    "batch_size": 5,
-    "max_detail_attempts_per_platform": 120,
-    "quota_rule": "All three platforms use configured keywords, target 20 per keyword and 60 unique complete records per platform; shortfalls may use other configured keywords, never exceed platform target.",
-    "publication_scope": "all_time"
-  },
-  "completeness": {
-    "required_metrics": {
-      "xiaohongshu": [
-        "likes",
-        "favorites",
-        "comments"
-      ],
-      "douyin": [
-        "likes",
-        "favorites",
-        "comments",
-        "shares"
-      ],
-      "bilibili": [
-        "views",
-        "likes",
-        "coins",
-        "favorites",
-        "comments",
-        "shares"
-      ]
-    },
-    "exact_metrics_only": false,
-    "incomplete_action": "discard; aggregate reasons only; no pending pool",
-    "precision_rule": "Publication metadata optional and observed only; exact integers or original approximate metric display; no publication-age filtering"
-  }
+  "schema": "benchmark_accounts_v1",
+  "platforms": [
+    "instagram",
+    "tiktok",
+    "youtube"
+  ],
+  "focus": "硬汉形象或人设，同时持续制作面包的海外对标账号",
+  "search_order": [
+    "instagram",
+    "tiktok",
+    "youtube"
+  ],
+  "search_terms": [
+    "muscular baker",
+    "bodybuilder baking bread",
+    "tattooed baker",
+    "baking bread gym",
+    "strongman baker",
+    "bread making man",
+    "sourdough baker"
+  ],
+  "discovery_routes": [
+    "platform_search",
+    "web_search",
+    "verified_creator_cross_links"
+  ],
+  "minimum_followers": null,
+  "minimum_views": null,
+  "target_accounts": null,
+  "publication_scope": "all_time",
+  "method": "search_discovery_then_profile_verification",
+  "stop_after": "candidate_report",
+  "missing_metrics": "keep_null_with_reason",
+  "cross_platform_identity": "merge_only_with_evidence"
 }
+
