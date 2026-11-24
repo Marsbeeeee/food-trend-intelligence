@@ -1,3 +1,5 @@
+> 历史平台记录：不用于当前采集。当前平台和执行规则见 [采集说明](../collection.md)。
+
 # 小红书采集操作
 
 配额、记录命令和停止条件遵循[采集标准](../collection.md)；本文件只记录页面操作经验。
@@ -12,3 +14,4 @@
 上次可用定位线索：搜索选项#video的active状态；详情#noteContainer中的video、h1、作者资料链接、.date；详情操作栏.like-wrapper .count、.collect-wrapper .count、.chat-wrapper .count。上次视频总赞出现在同类匹配的最后一项，但只有当前DOM确认该位置属于视频操作栏后才能使用，不能永久盲取first或last。
 
 “10万+”等保留原文，精确metrics留null；编辑时间不当首次发布时间。pipeline/collection.py负责最终字段检查和去重，浏览器采集不再临时定义另一套数据格式。
+

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "food-trend-intelligence"
-version = "0.1.0"
-description = "Date-archived food video screening and review-backed reports"
+version = "0.2.0"
+description = "Account-first overseas bread creator discovery and video comparisons"
 requires-python = ">=3.11"
 dependencies = ["tzdata; sys_platform == 'win32'"]
 
@@ -17,3 +17,4 @@ food-trend = "pipeline.cli:main"
 
 [tool.setuptools]
 packages = ["pipeline"]
+

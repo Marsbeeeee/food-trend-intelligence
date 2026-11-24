@@ -1,28 +1,35 @@
 ---
 name: food-trend-weekly
-description: Coordinate direct-browser food video collection, local date archives, deterministic screening, human review and Markdown reports with optional Word/PDF export.
+description: Discover overseas tough-persona bread-making benchmark accounts on Instagram, TikTok and YouTube, assemble candidate lists, record human selection and compare ordinary versus high-performing videos only after account selection.
 ---
 
-Read README.md and [workflow](../../../docs/workflow.md); commands and errors are in [usage](../../../docs/usage.md). Run only the user's requested stage through run.py. Python manages files and deterministic processing; it does not itself browse or log in.
+Read [workflow](../../../docs/workflow.md), [collection](../../../docs/collection.md) and [usage](../../../docs/usage.md). Follow repository AGENTS.md. Use run.py only; do not restore retired video-first commands.
 
-## Collection
+## Discover accounts
 
-1. Fix the user's archive date, otherwise today's date in Asia/Shanghai, separately from issue period and publication dates. Run `python run.py collect init --date YYYY-MM-DD` and `status --show-ids`; resume existing IDs and attempts without resets. Quotas, keywords and complete-field requirements come from config/collection.json, not new Skill rules.
-2. Read [collection rules](../../../docs/collection.md) and the relevant platform: [Douyin](../../../docs/collection/douyin.md), [Xiaohongshu](../../../docs/collection/xiaohongshu.md), [Bilibili](../../../docs/collection/bilibili.md). Check existing login first. When needed, show the actual QR/session and let the user sign in, then verify access. Only parallelize browser input across demonstrated independent sessions.
-3. Use keyword search and actual supported heat sorting; record comprehensive sorting honestly when heat sorting is unavailable. Video publication dates are unrestricted. Do not substitute channels, use age gates or fall back to MediaCrawler.
-4. Before each detail, record an attempt. Observe the current video's ID, title, author, full URL, required counters and capture time together. Preserve approximate/lower-bound displays and necessary access parameters. Use append for complete batches, reject for failed details; do not save incomplete payloads or invent counters/dates. Confirm current page state instead of relying on old selectors.
-5. Use actual added counts and existing checkpoints to resume; stop on configured target/attempt limit, CAPTCHA or access restriction. Continue unaffected platforms and report actual gaps. Finish with audit and stop at the requested stage.
+Read current config/collection.json. Search Instagram, TikTok and YouTube in configured order; use platform search, public search indexes and verified creator links. Record actual queries and sources. Apply no follower/view threshold or automatic low-view exclusion.
 
-## Screening and review
+Initialize an explicit archive date with accounts init; use the user's date or current date in their timezone. Read existing accounts and the frozen config_snapshot.json before resuming. Do not clear records or rewrite an existing snapshot.
 
-Use `python run.py discovery` to import/freeze existing files and `screen` to call the fixed modules. Screening parameters live in config/screening.json; do not reimplement ranking. Retain original IDs, precision, review flags and the three existing Chinese labels. Review with viewer; when substantive analysis is needed, inspect originals or reliable subtitles and record evidence under docs/data_format.md. A keep mark is not watched-video proof; cumulative counts are not growth or age-adjusted popularity.
+Inspect profiles and multiple posts to establish tough persona and sustained bread making. Separate direct, adjacent and unverified candidates. Preserve search_only when profile access is unavailable; never label an indexed snippet as a watched video. Preserve missing counters as null with reason and approximate displays unchanged.
 
-## Reporting and export
+Associate cross-platform creator IDs only with identity evidence on every linked account. Keep each platform account separately. Write accounts.jsonl according to [data format](../../../docs/data_format.md), validate, and generate an accounts report to a fresh output folder.
 
-Confirm the issue period separately from archive/capture dates. With viewer marks only, use review-report for an explicitly labeled draft and referenced title/description editorial input; do not fabricate checks.jsonl. With complete content evidence, use verify/report. Both use templates/weekly_report.md, sections01–06; full details stay tabular. Preserve user-kept rows unless further selection is requested. Do not infer trends from similar titles or one snapshot.
+Stop after delivering the candidate list unless the user requests the next stage. Do not automatically choose accounts or start bulk video analysis.
 
-Use export for optional Word output. Automatic PDF requires LibreOffice; if missing, a supported Word export may be used with actual render inspection. Do not claim unrun PDF conversion or publish Google Docs by default.
+## Human selection and later comparison
 
-## Local data and maintenance
+Record explicit selection with reasons in reviews.jsonl. Require observed profiles before selected. Accept only videos from selected accounts.
 
-Save all raw observations, reviews, run outputs and finished reports under the existing local data/YYYY/MMDD or frozen-run paths. The entire data directory is Git-ignored and must not be uploaded when synchronizing code. Preserve local files, user deletions and frozen manifests; viewer structure stays unchanged. Never commit cookies, tokens, browser sessions or scratch work. Repository maintenance follows AGENTS.md; update references rather than keeping obsolete command aliases.
+Collect consecutive daily samples separately from historical high performers; document sampling, publication age, pinned posts, paid collaborations and exceptions. Keep YouTube Shorts and long videos separate. Preserve observed URLs, author evidence, timestamps and metric precision.
+
+Record content_evidence only after watching originals or reading reliable transcripts. State when transcripts cannot establish visuals. Do not infer content from title or cover alone. Assign ordinary/high groups with human reasons; run videos validate and videos compare, without ad hoc ranking algorithms.
+
+Review the generated comparison draft, cite original evidence, distinguish observations from inference, and keep suggestions limited. Never claim causation or growth from cumulative snapshots.
+
+## Persistence and delivery
+
+Keep all real observations, reviews, snapshots and reports under Git-ignored data/. Preserve historical files and viewer structure. The existing viewer accepts old video records, not new account JSONL; use the new Markdown tables for account review.
+
+Use export for optional Word output; automatic PDF requires LibreOffice. Check actual rendering before claiming an export complete. Never commit cookies, API keys, browser sessions or data/.
+

@@ -38,11 +38,11 @@ for item in (old,young,unknown,rounded,invalid,ambiguous,irrelevant):
 with tempfile.TemporaryDirectory() as temp:
     root=Path(temp);folder=root/'input/xhs';folder.mkdir(parents=True)
     (folder/'records.jsonl').write_text(''.join(json.dumps(x)+'\n' for x in (old,young,unknown,rounded,invalid,ambiguous,irrelevant)),encoding='utf-8')
-    cfg=json.loads((ROOT/'config/report.json').read_text(encoding='utf-8'))
+    cfg=json.loads((ROOT/'config/legacy/report.json').read_text(encoding='utf-8'))
     cfg.update(platforms=['xhs'],observation_cutoff='2026-11-22T20:00:00+08:00',report_period_start='2026-11-15T00:00:00+08:00',report_period_end='2026-11-22T00:00:00+08:00')
     config=root/'config.json';config.write_text(json.dumps(cfg),encoding='utf-8')
     def run(stage,extra=()):
-        subprocess.run([sys.executable,str(ROOT/'run.py'),stage,'--run-id','test','--run-root',str(root/'runs'),'--config',str(config),'--input-root',str(root/'input'),*extra],check=True,capture_output=True)
+        subprocess.run([sys.executable,'-c','from pipeline.workflow import main; main()',stage,'--run-id','test','--run-root',str(root/'runs'),'--config',str(config),'--input-root',str(root/'input'),*extra],check=True,capture_output=True)
     for stage in ('discovery','screen','verify','report'):run(stage)
     path=root/'runs/test'
     result=[json.loads(x) for x in (path/'screened_candidates.jsonl').read_text(encoding='utf-8').splitlines()]
@@ -68,4 +68,5 @@ with tempfile.TemporaryDirectory() as temp:
     assert '不限制视频发布日期' in report and '不代表本周新爆款' in report
     subprocess.run([sys.executable,str(ROOT/'tests/check_reproducibility.py'),'--input-root',str(root/'input'),'--config',str(config)],check=True,capture_output=True)
 print('PASS: old, under-24h, unknown/edited dates kept; core omissions rejected; full reporting and reproducibility')
+
 

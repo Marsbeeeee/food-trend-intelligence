@@ -120,10 +120,10 @@ class CollectionTests(unittest.TestCase):
     def test_new_layout_pipeline_import_and_legacy_ambiguity(self):
         for short in PLATFORMS:
             self.attempt(short); self.job.append(short, [record(short)])
-        config = json.loads((ROOT/'config/report.json').read_text(encoding='utf-8'))
+        config = json.loads((ROOT/'config/legacy/report.json').read_text(encoding='utf-8'))
         config.update(observation_cutoff='2026-11-22T20:00:00+08:00')
         cfg = self.root/'config.json'; cfg.write_text(json.dumps(config), encoding='utf-8')
-        command = [sys.executable, str(ROOT/'run.py'), 'discovery', '--run-id', 'archive-import',
+        command = [sys.executable, '-c', 'from pipeline.workflow import main; main()', 'discovery', '--run-id', 'archive-import',
                    '--run-root', str(self.root/'runs'), '--config', str(cfg), '--input-root', str(self.job.folder)]
         subprocess.run(command, check=True, capture_output=True)
         summary = json.loads((self.root/'runs/archive-import/discovery.json').read_text(encoding='utf-8'))
@@ -141,7 +141,7 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(self.job.path('dy').read_bytes(), before)
 
     def test_cli_status_and_batch_limit(self):
-        result = subprocess.run([sys.executable, str(ROOT/'run.py'), 'collect', 'status', '--date', self.job.date,
+        result = subprocess.run([sys.executable, '-c', 'from pipeline.collection import main; main()', 'status', '--date', self.job.date,
                                  '--data-root', str(self.root)], check=True, capture_output=True)
         self.assertEqual(json.loads(result.stdout)['archive_date'], '2026-11-22')
         with self.assertRaisesRegex(ValueError, 'batch_size'):
@@ -170,3 +170,4 @@ class CollectionTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
